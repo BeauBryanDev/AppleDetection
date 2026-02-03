@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: apple_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+    # remember to edit this docker-compose file to save secrets variable in a .env file or use docker secrets in production
+    #  POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+      build: .
+      container_name: apple_backend
+      env_file: .env
+      ports:
+        - "8000:8000"
+      depends_on:
+         db: 
+            condition: service_healthy # Espera a que la DB esté lista
+      environment:
+        - DB_HOST=db 
+
+volumes:
+  postgres_data:
