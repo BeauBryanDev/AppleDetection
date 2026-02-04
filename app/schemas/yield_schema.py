@@ -28,6 +28,6 @@ class YieldResponse(YieldBase):
 class YieldAnalytics(BaseModel):
     total_detected: int
     healthy_count: int
-    damaged_count: int
-    health_percentage: float
-    status: str # "Good" o "Attention Required"
+    damaged_count: int = 0
+    average_health_index: float = 0.0
+    records_count: int = 0

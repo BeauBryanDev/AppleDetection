@@ -28,6 +28,12 @@ services:
       depends_on:
          db: 
             condition: service_healthy # Espera a que la DB esté lista
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+        interval: 5s
+        timeout: 5s
+        retries: 5
+        
       environment:
         - DB_HOST=db 
 
