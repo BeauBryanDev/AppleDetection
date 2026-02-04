@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Si estamos en Docker, el host será 'db', si es local será 'localhost'
+# Si estais en Docker, Use del host será 'db', si es local será 'localhost'
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
 
 # If DATABASE_URL has environment variable placeholders, build it from individual vars
@@ -30,7 +30,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# Dependencia para los endpoints de FastAPI
+# Dependencia 2 los endpoints de FastAPI necesitan la sesión
 def get_db():
     db = SessionLocal()
     try:

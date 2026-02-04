@@ -23,7 +23,7 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    # Añade aquí la IP de tu instancia de AWS cuando despliegues
+    
 ]
 
 # Add CORS middleware

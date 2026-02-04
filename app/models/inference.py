@@ -10,7 +10,7 @@ class AppleInference:
         if not Path(model_path).exists():
             raise FileNotFoundError(f"No se encontró el modelo en: {model_path}")
             
-        # Seleccionamos el proveedor (CPU es estándar para EC2/Portfolio)
+        # Seleccionamos el proveedor CPU/GPU
         self.session = ort.InferenceSession(
             model_path, 
             providers=['CPUExecutionProvider']
@@ -51,10 +51,10 @@ class AppleInference:
         # Ejecutar el modelo en ONNX Runtime
         outputs = self.session.run(None, {self.input_name: input_tensor})
         
-        # El output de YOLOv8 ONNX es [1, 6, 8400] -> (cx, cy, w, h, score_class1, score_class2)
+        # El output de YOLOv8 ONNX Usualmente es [1, 6, 8400] -> (cx, cy, w, h, score_class1, score_class2)
         predictions = np.squeeze(outputs[0]).T
         
-        # 1. Separar cajas de scores
+        #  Separar cajas de scores
         boxes = predictions[:, :4]      # cx, cy, w, h
         scores = predictions[:, 4:]     # Probabilidades de clase 0 y 1
         
@@ -75,7 +75,8 @@ class AppleInference:
         filtered_confidences = confidences[mask]
         filtered_class_ids = class_ids[mask]
         filtered_boxes = boxes[mask]
-        
+        # print(filtered_boxes)
+        # Carefull with the box format for NMS **(x, y, w, h)**
         # OpenCV NMS necesita la esquina superior izquierda (x, y)
         nms_boxes = []
         
@@ -86,7 +87,7 @@ class AppleInference:
             y = int(cy - (h / 2))
             nms_boxes.append([x, y, int(w), int(h)])
         
-        # 2. Ejecutar NMS con el formato correcto
+        #  Ejecutar NMS con el formato correcto
         indices = cv2.dnn.NMSBoxes(
             nms_boxes, 
             filtered_confidences.tolist(), 
@@ -98,13 +99,19 @@ class AppleInference:
         count_damaged = 0
         
         if len(indices) > 0:
-            # Aseguramos que los índices se manejen correctamente (flatten)
+            # (flatten)
             for i in indices.flatten():
+                
                 label_id = filtered_class_ids[i]
+                
                 if label_id == 0:
+                    
                     count_healthy += 1
+                    
                 elif label_id == 1:
+                    
                     count_damaged += 1
+                    
                     
         return {
             "apple": count_healthy,
