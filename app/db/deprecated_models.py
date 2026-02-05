@@ -11,6 +11,12 @@ def get_local_datetime():
     return datetime.now(timezone.utc).astimezone()
 
 
+def get_bogota_time():
+    
+    # UTC-5 para Colombia
+    return datetime.now(timezone(timedelta(hours=-5)))
+
+
 class YieldRecord(Base):
     __tablename__ = "yield_records"
 
@@ -73,11 +79,17 @@ class Tree(Base):
 class Image(Base):
     __tablename__ = "images"
     id = Column(Integer, primary_key=True, index=True)
+    # Relaciones directas para auditoría rápida
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    orchard_id = Column(Integer, ForeignKey("orchards.id"), nullable=False)
     tree_id = Column(Integer, ForeignKey("trees.id"), nullable=True)
-    image_path = Column(String, nullable=False) # URL de S3 en producción
-    uploaded_at = Column(DateTime, default=get_local_datetime)
     
+    image_path = Column(String, nullable=False)
+    uploaded_at = Column(DateTime, default=get_bogota_time)
+
+    # Relaciones SQLAlchemy para acceder a objetos vinculados
     tree = relationship("Tree", back_populates="images")
+    orchard = relationship("Orchard") 
     prediction = relationship("Prediction", back_populates="image", uselist=False)
     
     

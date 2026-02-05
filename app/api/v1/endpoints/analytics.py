@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.db.session import get_db
-from app.db import models
+from app.db.models import farming as models
 
 router = APIRouter()
 
@@ -29,10 +29,16 @@ async def get_orchard_dashboard(orchard_id: int, db: Session = Depends(get_db)):
         },
         "recent_detections": [
             {
-                "id": p.id,
-                "health": p.healthy_percentage,
-                "total": p.total_apples,
-                "timestamp": p.image.uploaded_at # Aquí verás la hora corregida
+                "prediction_id": p.id,
+                "image_id": p.image.id,
+                "image_path": p.image.image_path,
+                "healthy_apples": p.good_apples,
+                "damaged_apples": p.damaged_apples,
+                "total_apples": p.total_apples,
+                "health_index": p.healthy_percentage,
+                "orchard_name": p.image.orchard.name, # Acceso directo gracias al modelo
+                "tree_id": p.image.tree_id,
+                "timestamp": p.image.uploaded_at
             } for p in recent_activity
         ]
     }

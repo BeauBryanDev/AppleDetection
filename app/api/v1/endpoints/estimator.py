@@ -57,7 +57,8 @@ async def create_yield_estimate(
             healthy_count=healthy,
             damaged_count=damaged,
             total_count=total,
-            health_index=health_idx
+            health_index=health_idx,
+            user_id=1 # Default User
         )
         db.add(new_record)
         
@@ -66,6 +67,8 @@ async def create_yield_estimate(
         if orchard_id:
             # 1. Guardar Imagen
             new_image = models.Image(
+                user_id=1,  # Default user (TODO: get from auth)
+                orchard_id=orchard_id,
                 tree_id=tree_id,
                 image_path=f"uploads/{new_record.filename}"
             )
