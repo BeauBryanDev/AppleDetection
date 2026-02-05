@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-from app.api.v1.endpoints import estimator, history, analytics, users
+from app.api.v1.endpoints import estimator, history, analytics, users, farming
 from app.db.session import engine, Base
 from app.db import models  # Import models package to register all models
 import uvicorn
@@ -121,6 +121,12 @@ app.include_router(
     users.router,
     prefix="/api/v1/users",
     tags=["Users"]
+)
+
+app.include_router(
+    farming.router,
+    prefix="/api/v1/farming",
+    tags=["Farming"]
 )
 
 

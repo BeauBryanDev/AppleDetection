@@ -16,13 +16,13 @@ class UserCreate(UserBase):
     email: EmailStr
     password: str
 
+
 # Properties to receive via API on update
 class UserUpdate(BaseModel):
     name: Optional[str] = None
-    email: Optional[EmailStr] = None
     phone_number: Optional[str] = None
     password: Optional[str] = None
-    role: Optional[UserRole] = None
+
 
 # Properties to return to client
 class UserResponse(UserBase):

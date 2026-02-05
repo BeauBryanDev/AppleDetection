@@ -1,0 +1,144 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from app.db.session import get_db
+from app.db import models
+from app.schemas import tree_schema, orchard_schema
+from typing import List
+
+router = APIRouter()
+
+# --- GESTIÓN DE ÁRBOLES (TREES) ---
+
+@router.post("/orchard/{orchard_id}/create_tree", response_model=tree_schema.Tree)
+async def create_tree(
+    orchard_id: int, 
+    tree_data: tree_schema.TreeCreate, 
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new tree for the specified orchard.
+    Ensures the orchard_id in path matches the body.
+    """
+    # Validar que el huerto existe
+    orchard = db.query(models.Orchard).filter(models.Orchard.id == orchard_id).first()
+    if not orchard:
+        raise HTTPException(status_code=404, detail="Orchard not found")
+    
+    # Forzar el orchard_id de la URL sobre el cuerpo (seguridad)
+    tree_dict = tree_data.dict()
+    tree_dict['orchard_id'] = orchard_id
+    
+    new_tree = models.Tree(**tree_dict)
+    db.add(new_tree)
+    db.commit()
+    db.refresh(new_tree)
+    return new_tree
+
+@router.put("/orchard/{orchard_id}/tree/{tree_id}", response_model=tree_schema.Tree)
+async def update_tree(
+    orchard_id: int, 
+    tree_id: int, 
+    tree_update: tree_schema.TreeUpdate, 
+    db: Session = Depends(get_db)
+):
+    """
+    Update an existing tree.
+    Verifies that the tree belongs to the specified orchard.
+    """
+    tree = db.query(models.Tree).filter(
+        models.Tree.id == tree_id,
+        models.Tree.orchard_id == orchard_id
+    ).first()
+    
+    if not tree:
+        raise HTTPException(status_code=404, detail="Tree not found in this orchard")
+    
+    if tree_update.tree_code:
+        tree.tree_code = tree_update.tree_code
+    if tree_update.tree_type:
+        tree.tree_type = tree_update.tree_type
+        
+    db.commit()
+    db.refresh(tree)
+    return tree
+
+@router.get("/orchard/{orchard_id}/trees", response_model=List[tree_schema.Tree])
+async def get_orchard_trees(
+    orchard_id: int, 
+    db: Session = Depends(get_db)
+):
+    """
+    Get all trees belonging to a specific orchard.
+    """
+    trees = db.query(models.Tree).filter(models.Tree.orchard_id == orchard_id).all()
+    return trees
+
+# --- GESTIÓN DE HUERTOS (ORCHARDS) ---
+
+@router.post("/orchards", response_model=orchard_schema.Orchard)
+async def create_orchard(orchard: orchard_schema.Create, db: Session = Depends(get_db)):
+    new_orchard = models.Orchard(**orchard.dict())
+    db.add(new_orchard)
+    db.commit()
+    db.refresh(new_orchard)
+    return new_orchard
+
+@router.patch("/orchards/{orchard_id}", response_model=orchard_schema.Orchard)
+async def update_orchard_trees(orchard_id: int, n_trees: int, db: Session = Depends(get_db)):
+    db_orchard = db.query(models.Orchard).filter(models.Orchard.id == orchard_id).first()
+    if not db_orchard:
+        raise HTTPException(status_code=404, detail="Huerto no encontrado")
+    
+    # Solo permitimos cambiar n_trees según tu regla de negocio
+    db_orchard.n_trees = n_trees
+    db.commit()
+    db.refresh(db_orchard)
+    return db_orchard
+
+@router.delete("/orchards/{orchard_id}")
+async def delete_orchard(orchard_id: int, db: Session = Depends(get_db)):
+    db_orchard = db.query(models.Orchard).filter(models.Orchard.id == orchard_id).first()
+    if not db_orchard:
+        raise HTTPException(status_code=404, detail="Huerto no encontrado")
+    
+    db.delete(db_orchard)
+    db.commit()
+    return {"message": "Huerto y sus datos asociados eliminados"}
+
+@router.delete("/trees/{orchard_id}/{tree_id}")
+async def delete_tree(
+    orchard_id: int, 
+    tree_id: int, 
+    db: Session = Depends(get_db)
+):
+    """
+    Elimina un árbol específico perteneciente a un huerto.
+    Verifica que el árbol pertenezca al huerto indicado.
+    """
+    # Verificar que el árbol existe y pertenece al huerto
+    tree = db.query(models.Tree).filter(
+        models.Tree.id == tree_id,
+        models.Tree.orchard_id == orchard_id
+    ).first()
+    
+    if not tree:
+        raise HTTPException(
+            status_code=404, 
+            detail="Árbol no encontrado en el huerto especificado"
+        )
+    
+    db.delete(tree)
+    db.commit()
+    
+    return {"message": f"Árbol {tree_id} del huerto {orchard_id} eliminado correctamente"}
+
+# --- LIMPIEZA DE DATOS DE IA ---
+@router.delete("/images/{image_id}")
+async def delete_image_audit(image_id: int, db: Session = Depends(get_db)):
+    """Elimina imagen y por cascada sus predicciones y detecciones"""
+    img = db.query(models.Image).filter(models.Image.id == image_id).first()
+    if img:
+        # Aquí también deberías borrar el archivo físico en /uploads/
+        db.delete(img)
+        db.commit()
+    return {"status": "deleted"}

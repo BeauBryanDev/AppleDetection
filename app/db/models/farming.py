@@ -39,8 +39,10 @@ class Orchard(Base):
 class Tree(Base):
     __tablename__ = "trees"
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
     orchard_id = Column(Integer, ForeignKey("orchards.id"))
     tree_code = Column(String)
+    tree_type = Column(String)
     
     orchard = relationship("Orchard", back_populates="trees")
     images = relationship("Image", back_populates="tree")

@@ -1,25 +1,25 @@
 from pydantic import BaseModel
 from typing import Optional
-from app.db.models.users import UserRole
 
-
+# Shared properties
 class TreeBase(BaseModel):
-    
     orchard_id: int
-    tree_code : str
-    tree_type : str
+    tree_code: str
+    tree_type: Optional[str] = None
 
+# Properties to receive on creation
+class TreeCreate(TreeBase):
+    user_id: int
 
-class Create(TreeBase):
-    pass
+# Properties to receive on update
+class TreeUpdate(BaseModel):
+    tree_code: Optional[str] = None
+    tree_type: Optional[str] = None
 
-class Update(TreeBase):
-    pass
-
-class Response(TreeBase):
+# Properties returned to client
+class Tree(TreeBase):
     id: int
-    created_at: datetime
+    user_id: int
 
     class Config:
         from_attributes = True
-
