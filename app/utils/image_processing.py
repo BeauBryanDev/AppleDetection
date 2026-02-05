@@ -35,7 +35,7 @@ def draw_cyberpunk_detections(image_bytes: bytes, detections: dict):
             color = COLOR_DAMAGED
             label = "SYS: CRITICAL"
         
-        # ✅ NUEVO: Agregar confianza al label
+        # NUEVO: Agregar confianza al label
         if idx < len(confidences):
             label += f" {confidences[idx]:.2f}"
 

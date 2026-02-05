@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 from app.api.endpoints import estimator, history
 from app.db.session import engine, Base
 import uvicorn
@@ -9,10 +11,15 @@ logger = logging.getLogger(__name__)
 
 # Try to create tables, but don't fail if DB is unavailable
 try:
+    
     Base.metadata.create_all(bind=engine)
+    
     logger.info("Database tables created successfully")
+    
 except Exception as e:
+    
     logger.warning(f"Could not create database tables at startup: {e}")
+    
 
 # Create FastAPI app instance
 app = FastAPI(
@@ -49,6 +56,15 @@ app.add_middleware(
     ]
 )
 
+if not os.path.exists("uploads"):
+
+    os.mkdir("uploads")
+    
+    
+# Serve static files (uploads directory)
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+    
 # Include routers
 
 

@@ -12,9 +12,11 @@ router = APIRouter()
 
 @router.get("/records", response_model=List[yield_schema.YieldResponse])
 async def get_all_records(
-    skip: int = Query(0, ge=0, description="Número de registros a saltar"),
-    limit: int = Query(10, ge=1, le=100, description="Número máximo de registros"),
+    
+    skip: int = Query(0, ge=0, description="Max logs to skip"),
+    limit: int = Query(10, ge=1, le=100, description="Max logs to return"),
     db: Session = Depends(get_db)
+    
 ):
     """
     Obtiene todos los registros de estimaciones de rendimiento.
@@ -24,7 +26,9 @@ async def get_all_records(
     - limit: número máximo de registros a devolver
     """
     records = db.query(models.YieldRecord).order_by(
+        
         desc(models.YieldRecord.created_at)
+        
     ).offset(skip).limit(limit).all()
     
     return records
@@ -37,10 +41,13 @@ async def get_record_by_id(
 ):
     """Obtiene un registro específico por su ID"""
     record = db.query(models.YieldRecord).filter(
+        
         models.YieldRecord.id == record_id
+        
     ).first()
     
     if not record:
+        
         raise HTTPException(status_code=404, detail=f"Registro con ID {record_id} no encontrado")
     
     return record
@@ -48,8 +55,10 @@ async def get_record_by_id(
 
 @router.get("/analytics", response_model=yield_schema.YieldAnalytics)
 async def get_analytics(
+    
     days: int = Query(7, ge=1, description="Número de días a analizar"),
     db: Session = Depends(get_db)
+    
 ):
     """
     Obtiene estadísticas agregadas de los últimos N días.
@@ -60,7 +69,9 @@ async def get_analytics(
     cutoff_date = datetime.utcnow() - timedelta(days=days)
     
     records = db.query(models.YieldRecord).filter(
+        
         models.YieldRecord.created_at >= cutoff_date
+        
     ).all()
     
     if not records:

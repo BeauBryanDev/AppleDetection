@@ -55,7 +55,7 @@ class AppleInference:
         confidences = np.max(scores, axis=1)
         class_ids = np.argmax(scores, axis=1)
         mask = confidences > conf_threshold
-        
+        print(f"Máximo de confianza detectada: {np.max(confidences):.4f}")
         filtered_confidences = confidences[mask]
         filtered_class_ids = class_ids[mask]
         filtered_boxes = boxes[mask]
@@ -64,6 +64,7 @@ class AppleInference:
         
         # 6. Convertir formato para NMS
         nms_boxes = []
+        
         for box in filtered_boxes:
             cx, cy, w, h = box
             x = int(cx - (w / 2))
@@ -71,14 +72,14 @@ class AppleInference:
             nms_boxes.append([x, y, int(w), int(h)])
         
         # 7. Ejecutar NMS
-        indices = cv2.dnn.NMSBoxes(
+        indexes = cv2.dnn.NMSBoxes(
             nms_boxes, 
             filtered_confidences.tolist(), 
             conf_threshold, 
             0.45
         )
         
-        print(f"Detecciones después de NMS: {len(indices) if len(indices) > 0 else 0}")
+        print(f"Detecciones después de NMS: {len(indexes) if len(indexes) > 0 else 0}")
         
         # 8. Procesar resultados finales
         count_healthy = 0
@@ -90,8 +91,8 @@ class AppleInference:
         x_scale = orig_w / 640
         y_scale = orig_h / 640
         
-        if len(indices) > 0:
-            for i in indices.flatten():
+        if len(indexes) > 0:
+            for i in indexes.flatten():
                 label_id = filtered_class_ids[i]
                 confidence = filtered_confidences[i]
                 

@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr,  Field
 from datetime import datetime
-from typing import Optional
+from typing import Dict, List, Optional
+
+
 
 # Esquema base con los datos comunes
 class YieldBase(BaseModel):
@@ -31,3 +33,22 @@ class YieldAnalytics(BaseModel):
     damaged_count: int = 0
     average_health_index: float = 0.0
     records_count: int = 0
+    
+    
+class DetectionBase(BaseModel):
+    class_label: str
+    confidence: float
+    x_min: int
+    y_min: int
+    x_max: int
+    y_max: int
+
+class PredictionResponse(BaseModel):
+    total_apples: int
+    good_apples: int
+    damaged_apples: int
+    healthy_percentage: float
+    detections: List[DetectionBase]
+
+    class Config:
+        orm_mode = True
