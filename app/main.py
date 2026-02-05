@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-from app.api.endpoints import estimator, history
+from app.api.v1.endpoints import estimator, history, analytics
 from app.db.session import engine, Base
 import uvicorn
 import logging
@@ -52,7 +52,8 @@ app.add_middleware(
         "X-Damaged-Count",
         "X-Total-Count",
         "X-Health-Index",
-        "X-Record-ID"
+        "X-Record-ID",
+        "X-Prediction-ID"
     ]
 )
 
@@ -63,7 +64,7 @@ if not os.path.exists("uploads"):
     
 # Serve static files (uploads directory)
 
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/outputs", StaticFiles(directory="uploads"), name="outputs")
     
 # Include routers
 
@@ -99,14 +100,20 @@ async def startup_event():
 
 app.include_router(
     estimator.router, 
-    prefix="/api/estimator", 
+    prefix="/api/v1", 
     tags=["Estimator"]
 )
 
 app.include_router(
-    history.router, 
-    prefix="/api/history", 
+    history.router,
+    prefix="/api/v1", 
     tags=["History"]
+)
+
+app.include_router(
+    analytics.router,
+    prefix="/api/v1/analytics",
+    tags=["Analytics"]
 )
 
 

@@ -109,12 +109,20 @@ async def create_yield_estimate(
         # Generar imagen visual
         processed_image = draw_cyberpunk_detections(image_bytes, detections_data)
         
+
+
+        # Guardar imagen procesada
+        processed_image_path = f"uploads/{new_record.filename}"
+        with open(processed_image_path, "wb") as f:
+            f.write(processed_image)    
+        
         return Response(
             content=processed_image,
             media_type="image/jpeg",
             headers={
                 "X-Healthy-Count": str(healthy),
                 "X-Damaged-Count": str(damaged),
+                "X-Total-Count": str(total),
                 "X-Health-Index": str(health_idx),
                 "X-Record-ID": str(new_record.id),
                 "X-Prediction-ID": str(prediction_id) if prediction_id else "None"
@@ -130,95 +138,7 @@ async def create_yield_estimate(
         raise HTTPException(status_code=500, detail=str(e))
     
     
-@router.get("/estimate/{record_id}", response_model=yield_schema.YieldResponse)
 
-async def get_yield_estimate(
-    
-    record_id: int,
-    db: Session = Depends(get_db)
-    
-):
-    """
-    Obtener datos de una estimación previa por ID.
-    Args:
-        record_id: ID del registro en la base de datos
-        
-    Returns:
-        YieldResponse: Datos completos de la estimación
-    
-    """
-    record = db.query(models.YieldRecord).filter(
-        models.YieldRecord.id == record_id
-    ).first()
-    
-    if not record:
-        raise HTTPException(
-            status_code=404, 
-            detail=f"No se encontró el registro con ID {record_id}"
-        )
-    
-    return record
-
-@router.get("/estimates", response_model=list[yield_schema.YieldResponse])
-
-async def get_all_estimates(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    """
-    Endpoint para obtener todas las estimaciones con paginación.
-    
-    Args:
-        skip: Número de registros a saltar (default: 0)
-        limit: Número máximo de registros a retornar (default: 100)
-        
-    Returns:
-        List[YieldResponse]: Lista de todas las estimaciones
-    """
-    records = db.query(models.YieldRecord)\
-        .order_by(models.YieldRecord.created_at.desc())\
-        .offset(skip)\
-        .limit(limit)\
-        .all()
-    
-    return records
-
-
-@router.delete("/estimate/{record_id}")
-
-async def delete_estimate(
-    
-    record_id: int,
-    db: Session = Depends(get_db)
-    
-):
-    """
-    Endpoint para eliminar una estimación por su ID.
-    
-    Args:
-        record_id: ID del registro a eliminar
-        
-    Returns:
-        dict: Mensaje de confirmación
-    """
-    record = db.query(models.YieldRecord).filter(
-        models.YieldRecord.id == record_id
-    ).first()
-    
-    if not record:
-        raise HTTPException(
-            status_code=404, 
-            detail=f"No se encontró el registro con ID {record_id}"
-        )
-    
-    db.delete(record)
-    db.commit()
-    
-    return {
-        "message": f"Registro {record_id} eliminado exitosamente",
-        "deleted_id": record_id
-    }
 
 
 
