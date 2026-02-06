@@ -235,3 +235,17 @@ uploads/
 #ignore test api
 test_api.py
 
+#Ignore node_modules
+node_modules/
+
+#Ignore package-lock.json
+package-lock.json
+
+#Ignore yarn.lock
+yarn.lock
+
+#Ignore .DS_Store
+.DS_Store
+
+#Ignore .vscode
+.vscode/

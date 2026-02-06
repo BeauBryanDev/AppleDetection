@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilo base temporal para verificar que Tailwind carga */
+body {
+  @apply bg-slate-900 text-white; 
+}
