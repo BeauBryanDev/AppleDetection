@@ -1,17 +1,28 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import LoginPage from './pages/Login';
+import { DashboardLayout } from './layouts/DashboardLayout';
+import DashboardPage from './pages/Dashboard';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Ruta temporal para ver el Login */}
-          <Route path="/" element={<LoginPage />} />
+          {/* Rutas Públicas */}
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<div className='text-white text-center mt-20'>Página de Registro (Pendiente)</div>} />
-          <Route path="/dashboard" element={<div className='text-apple-green text-center mt-20 text-3xl font-bold'>🌱 BIENVENIDO AL DASHBOARD 🌱</div>} />
+          
+          {/* Redirección raíz */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          {/* Rutas Protegidas (Layout aplica a todas estas) */}
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/estimator" element={<div className="text-white">Página Estimador (Pendiente)</div>} />
+            <Route path="/history" element={<div className="text-white">Página Historial (Pendiente)</div>} />
+            <Route path="/settings" element={<div className="text-white">Página Configuración (Pendiente)</div>} />
+          </Route>
+          
         </Routes>
       </BrowserRouter>
     </AuthProvider>
