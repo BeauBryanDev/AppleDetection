@@ -17,6 +17,17 @@ class UserCreate(UserBase):
     password: str
 
 
+# Schema para Registro Público (Sin campo role)
+class UserSignup(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    phone_number: Optional[str] = None
+
+# Schema para Admin (Con campo role)
+class UserCreate(UserSignup):
+    role: UserRole = UserRole.FARMER
+
 # Properties to receive via API on update
 class UserUpdate(BaseModel):
     name: Optional[str] = None

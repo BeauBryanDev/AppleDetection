@@ -228,3 +228,10 @@ helper.py
 
 seed_db.py
 test_api.py
+
+#Ignore all aplles images in uploads/
+uploads/
+
+#ignore test api
+test_api.py
+

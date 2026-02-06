@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-from app.api.v1.endpoints import estimator, history, analytics, users, farming
+from app.api.v1.endpoints import estimator, history, analytics, users, farming, auth
 from app.db.session import engine, Base
 from app.db import models  # Import models package to register all models
 import uvicorn
@@ -103,6 +103,12 @@ app.include_router(
     estimator.router, 
     prefix="/api/v1", 
     tags=["Estimator"]
+)
+
+app.include_router(
+    auth.router,
+    prefix="/api/v1/auth",
+    tags=["Auth"]
 )
 
 app.include_router(
