@@ -8,8 +8,7 @@ services:
     env_file:
       - .env
     environment:
-    # remember to edit this docker-compose file to save secrets variable in a .env file or use docker secrets in production
-    #  POSTGRES_HOST_AUTH_METHOD: trust
+    
       POSTGRES_HOST_AUTH_METHOD: md5
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

@@ -10,17 +10,17 @@ import hmac
 load_dotenv()
 
 
-# --- CONFIGURACIÓN ---
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    raise ValueError("❌ CRITICAL: SECRET_KEY not found in .env file! Set it before running the app.")
+    raise ValueError("[X] CRITICAL: SECRET_KEY not found in .env file! Set it before running the app.")
 
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ALGORITHM = os.getenv("ALGORITHM", "HS256") # Remove tthe default algorithm in prod
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-
+# Remove the exp time in prod.
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica si la contraseña plana coincide con el hash"""
+    """Validate that plain password matches the HASH"""
     try:
         # Handle HMAC-SHA256 format
         if hashed_password.startswith("hmac_sha256$"):
@@ -45,7 +45,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    """Convierte una contraseña plana en un hash seguro"""
+    """Transform plain User Password into a secure HASH"""
     hashed = hmac.new(
         SECRET_KEY.encode(),
         password.encode(),
@@ -54,7 +54,7 @@ def get_password_hash(password: str) -> str:
     return f"hmac_sha256${hashed}"
 
 def create_access_token(subject: Union[str, Any], expires_delta: Optional[timedelta] = None) -> str:
-    """Genera el JWT Token que el usuario usará para identificarse"""
+    """Generate JWT for User in order to Authenticate while Logging and start session id"""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:

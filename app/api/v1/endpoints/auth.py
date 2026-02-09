@@ -18,7 +18,7 @@ async def login_access_token(
     """
     OAuth2 compatible token login, get an access token for future requests.
     """
-    # 1. Buscar usuario por email (form_data.username contendrá el email)
+    # 1. Search User by emaill (form_data.username it must get the existing email)
     print(f"DEBUG: Attempting login with username: {form_data.username}")
     user = db.query(User).filter(User.email == form_data.username).first()
     
@@ -29,7 +29,7 @@ async def login_access_token(
             detail="Email o contraseña incorrectos",
         )
     
-    # 2. Verificar contraseña
+    # 2. Validate Right Password
     print(f"DEBUG: User found: {user.email}, verifying password...")
     password_valid = security.verify_password(form_data.password, user.password_hash)
     print(f"DEBUG: Password valid: {password_valid}")
@@ -37,7 +37,7 @@ async def login_access_token(
     if not password_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email o contraseña incorrectos",
+            detail="Email or Password Incorrect",
         )
     
     # 3. Generar Token

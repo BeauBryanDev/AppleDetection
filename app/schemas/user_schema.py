@@ -17,14 +17,14 @@ class UserCreate(UserBase):
     password: str
 
 
-# Schema para Registro Público (Sin campo role)
+# Schema for Public Register / Log , it dos nto need role field.
 class UserSignup(BaseModel):
     name: str
     email: EmailStr
     password: str
     phone_number: Optional[str] = None
 
-# Schema para Admin (Con campo role)
+# Schema for Admin with role field.
 class UserCreate(UserSignup):
     role: UserRole = UserRole.FARMER
 

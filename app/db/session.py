@@ -18,9 +18,12 @@ if "${" in DATABASE_URL or not DATABASE_URL.startswith("sqlite"):
     pg_db = os.getenv('POSTGRES_DB')
     
     if pg_user and pg_password and pg_db:
+        
         DATABASE_URL = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
         print(f"Using PostgreSQL: {pg_host}:{pg_port}/{pg_db}")
+        
     else:
+        
         print("PostgreSQL variables not set, falling back to SQLite")
         DATABASE_URL = "sqlite:///./test.db"
 
@@ -30,10 +33,16 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# Dependencia 2 los endpoints de FastAPI necesitan la sesión
+#  Deps , FastAPI EndPoints Need Session Opens
+
 def get_db():
+    
     db = SessionLocal()
+    
     try:
+        
         yield db
+        
     finally:
+        
         db.close()

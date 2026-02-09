@@ -16,8 +16,8 @@ async def read_user_me(
     current_user: models.User = Depends(deps.get_current_user)
 ):
     """
-    Obtiene el perfil del usuario logueado usando el Token.
-    No requiere enviar ID en la URL.
+    Get the user profile 
+    Show User information
     """
     return current_user
 
@@ -30,15 +30,15 @@ async def read_user_by_id(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_user) # Opcional: Protegerlo también
 ):
-    """Busca un usuario específico por su ID  || si eres admin, devuelve todos los usuarios"""
-    #RBAC: Si eres admin, devuelve todos los usuarios
+    """Search an User by Id, check ig it is Admin User """
+    #RBAC: if it is admin user, return all users, then search user_id
     is_admin = current_user.role == UserRole.ADMIN
     is_self = current_user.id == user_id
-
+    # if User is not admin  tell that it is not allowed action
     if not is_admin and not is_self:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para ver el perfil de otros usuarios."
+            detail="Not Allowed to see others users profile"
         )
     
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -46,23 +46,23 @@ async def read_user_by_id(
     if not user:
         
         
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail="User no found")
     
     return user
 
 
-# 1. Endpoint PÚBLICO: Registro de nuevos agricultores (Sign Up)
+# 1. Public Endpoint to register new farmers users (Sign Up)
 @router.post("/signup", response_model=user_schema.UserResponse)
 async def register_new_user(
     user_in: user_schema.UserCreate, 
     db: Session = Depends(get_db)
 ):
     """
-    Registro público. Cualquiera puede registrarse.
-    🔒 SEGURIDAD: El rol se fuerza a FARMER automáticamente.
+    Public Register open to public
+    Security features, it force user to be admin.
     """
     if db.query(models.User).filter(models.User.email == user_in.email).first():
-        raise HTTPException(status_code=400, detail="El email ya está registrado")
+        raise HTTPException(status_code=400, detail="email is already used by other user")
         
     hashed_password = security.get_password_hash(user_in.password)
     
@@ -71,14 +71,15 @@ async def register_new_user(
         email=user_in.email,
         phone_number=user_in.phone_number,
         password_hash=hashed_password,
-        role=UserRole.FARMER # <--- AQUÍ ESTÁ EL CANDADO. Ignoramos user_in.role
+        role=UserRole.FARMER # <--- Ignore user role choose form endpoint.
     )
+    # Save in Database
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     return new_user
 
-# Create New User (Protected) ONLy for Admins
+# Create a new User, it is protected , oly for admin can create new admin users.
 @router.post("/", response_model=user_schema.UserResponse)
 async def create_user_for_admins(
     user_in: user_schema.UserCreate, 
@@ -87,7 +88,7 @@ async def create_user_for_admins(
 ):
     # Check if email exists
     if db.query(models.User).filter(models.User.email == user_in.email).first():
-        raise HTTPException(status_code=400, detail="El email ya está registrado")
+        raise HTTPException(status_code=400, detail="Email is already used in db")
         
     hashed_password = security.get_password_hash(user_in.password)
     
@@ -116,19 +117,19 @@ async def delete_user(
     if current_user.id == user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="No puedes eliminar tu propia cuenta de administrador."
+            detail="Admin can not delete its own account, ask request to your system administrator."
         )
         
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail="Not Found User")
     
     db.delete(user)
     db.commit()
     
     print(f"DEBUG: User {user_id} deleted successfully")
     
-    return {"message": f"Usuario {user_id} eliminado exitosamente"}
+    return {"message": f"User id: {user_id} has been deleted from database"}
 
 
 @router.patch("/{user_id}", response_model=user_schema.UserResponse)
@@ -139,26 +140,26 @@ async def update_user(
     current_user: models.User = Depends(deps.get_current_user) # 1. Capa de Autenticación
 ):
     """
-    Actualiza campos de un usuario específico.
-    Reglas de Seguridad:
-    - Un ADMIN puede editar a cualquiera.
-    - Un USUARIO normal solo puede editarse a sí mismo.
+    Updare fileds from an specfiic user
+    Security Rules:
+    - Admin can edit all roles.
+    - Regular User can only edit its own profile information, not beyond
     """
     
-    # 2. Capa de Autorización (Check de permisos)
-    # Si no es Admin Y está intentando editar un ID que no es el suyo -> ERROR
+    # 2. Auth layer to check for permissions
+    # If Not admin, attempting to edit another profile,  Deny!
     if current_user.role != UserRole.ADMIN and current_user.id != user_id:
-        
+        # Action Not allowed
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos suficientes para editar este perfil."
+            detail="You do not have enough permissions to take on this action."
         )
 
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail="User Not found")
 
-    # 3. Actualización de datos
+    # 3. User Data update
     if obj_in.name:
         user.name = obj_in.name
     if obj_in.phone_number:
@@ -166,9 +167,9 @@ async def update_user(
     
     # 'password: Optional[str] = None' a tu UserUpdate schema
     if hasattr(obj_in, 'password') and obj_in.password:
-        # 3. Capa de Criptografía: Usamos Bcrypt real
+        # 3. Cryptography layer by ByCript 
         user.password_hash = security.get_password_hash(obj_in.password)
-        
+        # save changing in database
     db.commit()
     db.refresh(user)
     return user

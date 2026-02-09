@@ -18,20 +18,20 @@ def validate_orchard_ownership(
     db: Session
 ) -> models.Orchard:
     """
-    Valida que el orchard existe y pertenece al usuario actual.
-    Los ADMIN pueden acceder a cualquier orchard.
+    Validate Orchard exist and belongs to same user
+    Adming user can see orchards from other usersid in database 
     
     Args:
-        orchard_id: ID del orchard a validar
-        current_user: Usuario autenticado
-        db: Sesión de base de datos
+        orchard_id:
+        current_user: auth user
+        db: databsee session
         
     Returns:
-        Orchard: El orchard validado
+        Orchard: valid orchard fro mdatabase
         
     Raises:
-        HTTPException 404: Si el orchard no existe
-        HTTPException 403: Si el usuario no tiene permisos
+        HTTPException 404: If orchard does nto exists
+        HTTPException 403: If user does not have enough permission. Not Admin. 
     """
     orchard = db.query(models.Orchard).filter(
         models.Orchard.id == orchard_id
@@ -40,14 +40,14 @@ def validate_orchard_ownership(
     if not orchard:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Orchard {orchard_id} not found"
+            detail=f"Orchard {orchard_id} Not Found"
         )
     
-    # Si es ADMIN, puede acceder a cualquier orchard
+    # Si it is admin, it can acess all orchards to see reports in dashboards.
     if current_user.role == UserRole.ADMIN:
         return orchard
     
-    # Si no es ADMIN, debe ser el dueño
+    # If it is not admin, then it must owns the requested orchard id.
     if orchard.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -64,21 +64,21 @@ def validate_tree_ownership(
     db: Session
 ) -> models.Tree:
     """
-    Valida que el árbol existe, pertenece al orchard indicado,
-    y el usuario tiene permisos.
+    Validate that this tree exists and it belongs to orchard id, 
+    UCurrent User must have all permission to go.
     
     Args:
-        tree_id: ID del árbol
-        orchard_id: ID del orchard
-        current_user: Usuario autenticado
-        db: Sesión de base de datos
+        tree_id: 
+        orchard_
+        current_user: authenticated user
+        db: database session
         
     Returns:
-        Tree: El árbol validado
+        Tree: valid treee.
         
     Raises:
-        HTTPException 404: Si el árbol no existe
-        HTTPException 403: Si el usuario no tiene permisos
+        HTTPException 404: if not treee
+        HTTPException 403: User does nto have permissions to go.
     """
     tree = db.query(models.Tree).filter(
         models.Tree.id == tree_id,
@@ -88,7 +88,7 @@ def validate_tree_ownership(
     if not tree:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Tree {tree_id} not found in orchard {orchard_id}"
+            detail=f"Tree {tree_id} Not Found in Orchard {orchard_id}"
         )
     
     # Validar que el orchard pertenece al usuario
@@ -103,19 +103,19 @@ def validate_image_ownership(
     db: Session
 ) -> models.Image:
     """
-    Valida que la imagen existe y pertenece al usuario.
+    Validate Image exist and it belongs to current user
     
     Args:
-        image_id: ID de la imagen
-        current_user: Usuario autenticado
-        db: Sesión de base de datos
+        image_id: 
+        current_user: 
+        db: 
         
     Returns:
-        Image: La imagen validada
+        Image: validated resource
         
     Raises:
-        HTTPException 404: Si la imagen no existe
-        HTTPException 403: Si el usuario no tiene permisos
+        HTTPException 404: if image resource does nto exist
+        HTTPException 403: if user does not have permission to go
     """
     image = db.query(models.Image).filter(
         models.Image.id == image_id
@@ -124,14 +124,14 @@ def validate_image_ownership(
     if not image:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Image {image_id} not found"
+            detail=f"Image {image_id} Not Found"
         )
     
-    # Si es ADMIN, puede acceder a cualquier imagen
+    # I it is admin,  it can access / see all images/resoruces
     if current_user.role == UserRole.ADMIN:
         return image
     
-    # Validar que la imagen pertenece al usuario
+    # Validate images belongs to current user
     if image.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -141,29 +141,26 @@ def validate_image_ownership(
     return image
 
 
-# ============================================
-# GESTIÓN DE HUERTOS (ORCHARDS)
-# ============================================
-
+# Orchards management
 @router.get("/orchards", response_model=List[orchard_schema.Orchard])
 async def get_orchards(
     db: Session = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Obtiene los orchards del usuario actual.
+    Get all orchards from current user.
     
-    - FARMER: Solo ve sus propios orchards
-    - ADMIN: Ve todos los orchards del sistema
+    - FARMER: Only can see its own orchards
+    - ADMIN:  Can see all orchards in the system 
     
     Returns:
-        List[Orchard]: Lista de orchards
+        List[Orchard]: Orchards list
     """
-    # Si es ADMIN, retorna todos los orchards
+    # If it is  ADMIN, return all  orchards in database
     if current_user.role == UserRole.ADMIN:
         orchards = db.query(models.Orchard).all()
     else:
-        # Si es FARMER, solo sus orchards
+        # If it is FARMER, it only can see its own  orchards
         orchards = db.query(models.Orchard).filter(
             models.Orchard.user_id == current_user.id
         ).all()
@@ -178,21 +175,22 @@ async def get_orchard(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Obtiene un orchard específico por ID.
+    Get just the requested orchard id 
     
-    Validaciones:
-    - El orchard debe existir
-    - El usuario debe ser el dueño (o ADMIN)
+    Validations:
+
+    - Orchard id must exists
+    - User must own the orchard or be  an  ADMIN
     
     Args:
-        orchard_id: ID del orchard
+        orchard_id: 
         
     Returns:
-        Orchard: Datos del orchard
+        Orchard: 
         
     Raises:
-        404: Si el orchard no existe
-        403: Si el usuario no tiene permisos
+        404: if orchard does not exits
+        403: if user does nto have permissions
     """
     orchard = validate_orchard_ownership(orchard_id, current_user, db)
     return orchard
@@ -205,20 +203,19 @@ async def create_orchard(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Crea un nuevo orchard para el usuario actual.
+    Create a new orchard for current user id .
     
-    SEGURIDAD: El user_id se asigna automáticamente desde el token.
-    No es necesario enviarlo en el body.
+    Security : current user id  must be asigned to orchard at the moment of creating
     
     Args:
-        orchard_data: Datos del orchard (name, location, n_trees)
+        orchard_data:  orchard fields (name, location, n_trees)
         
     Returns:
-        Orchard: El orchard creado
+        Orchard: new orchard class isntance
     """
-    # Crear el orchard con el user_id del usuario autenticado
+    # Create a new orchard with the id of authenticated user
     orchard_dict = orchard_data.dict()
-    orchard_dict['user_id'] = current_user.id  # ✅ Asignación automática
+    orchard_dict['user_id'] = current_user.id  # authomatic asign
     
     new_orchard = models.Orchard(**orchard_dict)
     db.add(new_orchard)
@@ -236,22 +233,25 @@ async def update_orchard(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Actualiza el número de árboles de un orchard.
-    
-    Validaciones:
-    - El orchard debe existir
-    - El usuario debe ser el dueño (o ADMIN)
+    Update number of threes from a current orchard
+    + It only allows User/Farmers to edit the numbers of threes,
+    - Users can not change orchard name or location
+    - they must delete current orchard and create a neww one
+
+    Validations:
+    - Orchard must exist
+    - User must be the owner or Admin role 
     
     Args:
-        orchard_id: ID del orchard
-        n_trees: Nuevo número de árboles
+        orchard_id:
+        n_trees: Number of threes 
         
     Returns:
-        Orchard: El orchard actualizado
+        Orchard: updated orchard
         
     Raises:
-        404: Si el orchard no existe
-        403: Si el usuario no tiene permisos
+        404: If orchard does nto exist
+        403: If user does not have enoguh privileges
     """
     # Validar ownership
     orchard = validate_orchard_ownership(orchard_id, current_user, db)
@@ -263,7 +263,7 @@ async def update_orchard(
     
     return orchard
 
-
+# Delete an existing Orchard
 @router.delete("/orchards/{orchard_id}", status_code=status.HTTP_200_OK)
 async def delete_orchard(
     orchard_id: int,
@@ -271,26 +271,26 @@ async def delete_orchard(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Elimina un orchard y todos sus datos asociados (árboles, imágenes, predicciones).
+    Delete an orchard and all its data like: trees, images, predictions.
     
-    CASCADA: Al eliminar el orchard, se eliminan automáticamente:
-    - Todos los árboles del orchard
-    - Todas las imágenes de esos árboles
-    - Todas las predicciones y detecciones
+    CASCADA: when orchard deleted is must be cascade delete all resoruces
+    - All trees from  orchard
+    - All images from these trees
+    - All predictions and detections must be gone.
     
-    Validaciones:
-    - El orchard debe existir
-    - El usuario debe ser el dueño (o ADMIN)
+    Validations : 
+    - Ordchard must exist before being deleted
+    - User must own this orchard or user must have Admin Privileges
     
     Args:
-        orchard_id: ID del orchard a eliminar
+        orchard_id: 
         
     Returns:
-        dict: Mensaje de confirmación
+        dict: confirmation message
         
     Raises:
-        404: Si el orchard no existe
-        403: Si el usuario no tiene permisos
+        404: If Orchard does nto exist
+        403: If not enough privileges 
     """
     # Validar ownership
     orchard = validate_orchard_ownership(orchard_id, current_user, db)

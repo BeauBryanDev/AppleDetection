@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 
 
-# Esquema base con los datos comunes
+# Basic  Schema for common datos without logging first.
 class YieldBase(BaseModel):
     filename: str = Field(..., example="tree_01.jpg")
     healthy_count: int = Field(..., ge=0, example=12)
@@ -12,21 +12,21 @@ class YieldBase(BaseModel):
     total_count: int = Field(..., ge=0, example=15)
     health_index: float = Field(..., ge=0, le=100, example=80.0)
 
-# Esquema para la creación de un registro (Input para la DB)
+# Schema to create a new log into database
 class YieldCreate(YieldBase):
     pass
 
-# Esquema para la respuesta al usuario (Output de la API)
+# Schema for user response API Output
 class YieldResponse(YieldBase):
     id: int
     created_at: datetime
 
     class Config:
-        # Esto permite que Pydantic lea los datos de modelos de SQLAlchemy (objetos)
-        # y no solo de diccionarios. Es vital para la integración con la DB.
+        # It allows Pydantic to read the models 
+        # Critical for databsee Integration 
         from_attributes = True
 
-# Esquema específico para el análisis rápido (Dashboard de React)
+# Rightfull Schema for quick  Analyissi , critical for React Dashboard in frontEnd.
 class YieldAnalytics(BaseModel):
     total_detected: int
     healthy_count: int

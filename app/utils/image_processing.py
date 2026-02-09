@@ -3,68 +3,84 @@ import numpy as np
 
 def draw_cyberpunk_detections(image_bytes: bytes, detections: dict):
     """
-    Dibuja bounding boxes con estética Cyberpunk/HUD sobre la imagen.
+        Draw Bounging-Box with CyberPunk/HUD style over the incoming picture
     """
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
     if img is None:
-        raise ValueError("No se pudo decodificar la imagen")
+        raise ValueError("Unable to Decode imanges")
     
     boxes = detections.get("boxes", [])
     class_ids = detections.get("class_ids", [])
     confidences = detections.get("confidences", [])
     
-    # Paleta de colores
+    # Color Pallette 
     COLOR_HEALTHY = (57, 255, 20)
     COLOR_DAMAGED = (147, 20, 255)
+    COLOR_GREEN =  ( 0,225,125)
     COLOR_BG = (0, 0, 0)
     
     for idx, (box, class_id) in enumerate(zip(boxes, class_ids)):
         x, y, w, h = box
         
-        # Validar coordenadas
+        # Validate >Coordinates 
         if w <= 0 or h <= 0:
             continue
         
-        # Configuración según clase
+        # Class Setting
         if class_id == 0:
+            
             color = COLOR_HEALTHY
             label = "SYS: HEALTHY"
-        else:
+            
+        elif class_id == 1 :
+            
             color = COLOR_DAMAGED
             label = "SYS: CRITICAL"
+            
+        elif class_id == 2 :
+            
+            color = COLOR_GREEN
+            label = "SYS: GREEN"
+            
+        else :  
+            
+            continue
         
-        # NUEVO: Agregar confianza al label
+        # Add Confident to the label Reactangle 
+        
         if idx < len(confidences):
+            
             label += f" {confidences[idx]:.2f}"
 
-        # Caja principal
+        # Main Box 
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
 
-        # Esquinas reforzadas
+        # Reinforce Tag
         line_len = int(min(w, h) * 0.2)
         thickness = 3
         
-        # Esquina Superior Izquierda
+        # Upper Left Tag
         cv2.line(img, (x, y), (x + line_len, y), color, thickness)
         cv2.line(img, (x, y), (x, y + line_len), color, thickness)
         
-        # Esquina Superior Derecha
+        # Upper Right Tag
         cv2.line(img, (x + w, y), (x + w - line_len, y), color, thickness)
         cv2.line(img, (x + w, y), (x + w, y + line_len), color, thickness)
         
-        # Esquina Inferior Izquierda
+        # Bottom Left Tag
         cv2.line(img, (x, y + h), (x + line_len, y + h), color, thickness)
         cv2.line(img, (x, y + h), (x, y + h - line_len), color, thickness)
         
-        # Esquina Inferior Derecha
+        # Bottom R>ight Tag
         cv2.line(img, (x + w, y + h), (x + w - line_len, y + h), color, thickness)
         cv2.line(img, (x + w, y + h), (x + w, y + h - line_len), color, thickness)
 
-        # Etiqueta con mejor tamaño
+        # Best Size tag
         font_scale = 0.6
         font_thickness = 2
+        
         (text_w, text_h), baseline = cv2.getTextSize(
             label, 
             cv2.FONT_HERSHEY_SIMPLEX, 
@@ -74,7 +90,7 @@ def draw_cyberpunk_detections(image_bytes: bytes, detections: dict):
         
         label_y = max(y - 10, text_h + 10)
         
-        # Fondo negro
+        # Black BackGround 
         cv2.rectangle(
             img, 
             (x, label_y - text_h - 8), 
@@ -83,7 +99,7 @@ def draw_cyberpunk_detections(image_bytes: bytes, detections: dict):
             -1
         )
         
-        # Texto
+        # Inner Text
         cv2.putText(
             img, 
             label, 
@@ -95,12 +111,13 @@ def draw_cyberpunk_detections(image_bytes: bytes, detections: dict):
             cv2.LINE_AA
         )
 
-    # Codificar con mejor calidad
+    # Code within Best Quality 
+    
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 95]
     success, buffer = cv2.imencode(".jpg", img, encode_param)
     
     if not success:
         
-        raise ValueError("No se pudo codificar la imagen procesada")
+        raise ValueError("Unable to encode the processed Imanges!")
     
     return buffer.tobytes()

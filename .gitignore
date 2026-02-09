@@ -249,3 +249,6 @@ yarn.lock
 
 #Ignore .vscode
 .vscode/
+
+# Ignore all .backup 
+*.backup
