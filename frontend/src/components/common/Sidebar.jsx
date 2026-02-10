@@ -1,13 +1,27 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ScanLine, History, Settings, Sprout } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Zap,
+  History,
+  Trees,
+  BarChart3,
+  Shield,
+  Sprout
+} from 'lucide-react';
 import clsx from 'clsx';
+import { useAuth } from '../../context/AuthContext';
 
 export function Sidebar() {
+  const { user } = useAuth();
+
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: ScanLine, label: 'Estimador AI', path: '/estimator' },
+    { icon: Zap, label: 'Estimador AI', path: '/estimator' },
+    { icon: Trees, label: 'Mis Huertos', path: '/farming' },
+    { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: History, label: 'Historial', path: '/history' },
-    { icon: Settings, label: 'Configuración', path: '/settings' },
+    // Admin-only item
+    ...(user?.role === 'ADMIN' ? [{ icon: Shield, label: 'Usuarios', path: '/users' }] : []),
   ];
 
   return (

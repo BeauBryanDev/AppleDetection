@@ -3,8 +3,7 @@ import numpy as np
 import onnxruntime as ort
 from pathlib import Path
 
-
-#  Apple Detection Call Model 
+# Apple Detection Call Model 
 class AppleInference:
     
     def __init__(self, model_path: str):
@@ -32,6 +31,47 @@ class AppleInference:
         img = np.expand_dims(img, axis=0)
         return img
 
+    def _classify_apple_color(self, roi: np.ndarray) -> int:
+        """
+        Clasifica si el apple es red (0) o green (2) basado en color dominante en HSV.
+        
+        Args:
+            roi: Región del bounding box (BGR)
+        
+        Returns:
+            0 para red_apple, 2 para green_apple
+        """
+        # Convert to HSV (better for colors)
+        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        
+        # Red Color Mask (Hue 0-10 y 170-180, Sat >100, Value >100)
+        lower_red1 = np.array([0, 100, 100])
+        upper_red1 = np.array([10, 255, 255])
+        lower_red2 = np.array([170, 100, 100])
+        upper_red2 = np.array([180, 255, 255])
+        mask_red = cv2.inRange(hsv, lower_red1, upper_red1) + cv2.inRange(hsv, lower_red2, upper_red2)
+        
+        # Green Mask (Hue 40-80, Sat >100, Value >100) - adjusted for green apples
+        lower_green = np.array([40, 100, 100])
+        upper_green = np.array([80, 255, 255])
+        mask_green = cv2.inRange(hsv, lower_green, upper_green)
+        
+        # Count non-zero pixels (covered area)
+        red_pixels = cv2.countNonZero(mask_red)
+        green_pixels = cv2.countNonZero(mask_green)
+        
+        total_pixels = roi.shape[0] * roi.shape[1]
+        red_ratio = red_pixels / total_pixels
+        green_ratio = green_pixels / total_pixels
+        
+        print(f"Color analysis: Red ratio {red_ratio:.2f}, Green ratio {green_ratio:.2f}")
+        
+        # Decidir: si green > red y >0.3 (umbral para evitar ruido), green; else red
+        if green_ratio > red_ratio and green_ratio > 0.30:
+            return 2  # green_apple
+        else:
+            return 0  # red_apple
+
     def run_inference(self, image_bytes: bytes):
         """Excecute Detection , then it returns the apple number \counting/"""
         nparr = np.frombuffer(image_bytes, np.uint8)
@@ -56,7 +96,7 @@ class AppleInference:
         print(f"Max Confident Detected: {np.max(scores):.4f}")
         
         # 5. Confident Filtering
-        conf_threshold = 0.35
+        conf_threshold = 0.45
         confidences = np.max(scores, axis=1)
         class_ids = np.argmax(scores, axis=1)
         mask = confidences > conf_threshold
@@ -81,7 +121,7 @@ class AppleInference:
             nms_boxes, 
             filtered_confidences.tolist(), 
             conf_threshold, 
-            0.4
+            0.45
         )
         
         print(f"Detection after NMS: {len(indexes) if len(indexes) > 0 else 0}")
@@ -104,7 +144,7 @@ class AppleInference:
         
         if len(indexes) > 0:
             for i in indexes.flatten():
-                label_id = filtered_class_ids[i]
+                orig_label_id = filtered_class_ids[i]  # Guardamos el original del modelo
                 confidence = filtered_confidences[i]
                 
                 # get boxes in 640px
@@ -116,29 +156,45 @@ class AppleInference:
                 w_real = int(w_640 * x_scale)
                 h_real = int(h_640 * y_scale)
                 
+                # Ajustar bounds para evitar out-of-range
+                x_real = max(0, x_real)
+                y_real = max(0, y_real)
+                w_real = min(w_real, orig_w - x_real)
+                h_real = min(h_real, orig_h - y_real)
+                
+                if w_real <= 0 or h_real <= 0:
+                    continue
+                
+                # Post-procesamiento de color SOLO para class_id==0 ("apple")
+                label_id = orig_label_id
+                if label_id == 0:
+                    # Extraer ROI
+                    roi = img_original[y_real:y_real + h_real, x_real:x_real + w_real]
+                    if roi.size == 0:
+                        continue  # ROI vacío
+                    
+                    # Clasificar color
+                    #color_class = self._classify_apple_color(roi)
+                    #label_id = color_class  # 0=red, 2=green
+                
                 # Save only once 
                 final_boxes.append([x_real, y_real, w_real, h_real])
                 final_class_ids.append(int(label_id))
                 final_confidences.append(float(confidence))
                 
                 # Class Counting in Image  
-                
-                if label_id == 0:
-                    
+                if label_id == 0:  # red_apple
                     count_red_apple += 1
                     count_healthy_apple += 1
                     
-                elif label_id == 1:
-                    
+                elif label_id == 1:  # damaged
                     count_damaged_apple += 1
                     
-                elif label_id == 2 :
-                    
+                elif label_id == 2:  # green_apple
                     count_green_apple += 1 
                     count_healthy_apple += 1
                     
-                else :
-                    
+                else:
                     continue 
         
         # Apple Detection 
@@ -155,7 +211,7 @@ class AppleInference:
             "detections": {
                 "boxes": final_boxes,
                 "class_ids": final_class_ids,
-                "confidences": final_confidences  # ← Nuevo: para mostrar confianza
+                "confidences": final_confidences
             }
         }
 

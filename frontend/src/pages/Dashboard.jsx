@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Trees, Sprout, Activity, AlertTriangle, MapPin, Calendar, CheckCircle2, Search } from 'lucide-react';
-import { getOrchardsRequest, getDashboardAnalyticsRequest } from '../api/farming';
+import { getOrchardsRequest } from '../api/farming';
+import { getDashboardAnalyticsRequest } from '../api/analytics';
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
