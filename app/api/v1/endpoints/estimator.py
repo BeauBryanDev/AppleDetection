@@ -41,11 +41,11 @@ def validate_orchard_and_tree(
         HTTPException 404: Si orchard/tree no existen
         HTTPException 403: Si no tiene permisos
     """
-    # Si no hay orchard_id, modo guest/simple (no validar nada)
+    # if not orchard_id , return None for guest ussage. 
     if orchard_id is None:
         return None, None
     
-    # Si hay orchard_id, validar que existe
+    # Si there is orchard, validate that it exist
     orchard = db.query(models.Orchard).filter(
         models.Orchard.id == orchard_id
     ).first()
@@ -56,7 +56,7 @@ def validate_orchard_and_tree(
             detail=f"Orchard {orchard_id} not found"
         )
     
-    # Validar ownership del orchard (excepto ADMIN)
+    # Validate orchard ownership
     if current_user.role != UserRole.ADMIN:
         if orchard.user_id != current_user.id:
             raise HTTPException(
@@ -64,11 +64,11 @@ def validate_orchard_and_tree(
                 detail="You can only upload images to orchards that you own"
             )
     
-    # Si no hay tree_id, retornar solo orchard validado
+    # If not tree return only valid orchard id 
     if tree_id is None:
         return orchard, None
     
-    # Si hay tree_id, validar que existe y pertenece al orchard
+    # if not tree id , return only existing rochard tree. 
     tree = db.query(models.Tree).filter(
         models.Tree.id == tree_id,
         models.Tree.orchard_id == orchard_id
@@ -101,10 +101,7 @@ def validate_image_file(file: UploadFile):
             detail=f"Invalid file format. Allowed: {', '.join(allowed_types)}"
         )
 
-
-# ============================================
-# ENDPOINT PRINCIPAL
-# ============================================
+# MAIN ENDPOINT FOR ESTIMATOR.
 
 @router.post("/estimate")
 async def create_yield_estimate(
@@ -210,10 +207,13 @@ async def create_yield_estimate(
         # Extraer resultados
         counts = detection_results["counts"]
         detections_data = detection_results["detections"]
-        
-        total = counts["total"]
-        healthy = counts["apple"]
+        red_apples = counts["red_apple"] 
+        green_apple = counts["green_apple"]
+        healthy = red_apples + green_apple
         damaged = counts["damaged_apple"]
+        total = counts["total"]
+        
+        
         health_idx = round((healthy / total * 100) if total > 0 else 0.0, 2)
         inference_time = round((time.time() - start_time) * 1000, 2)
         

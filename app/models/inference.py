@@ -56,7 +56,7 @@ class AppleInference:
         print(f"Max Confident Detected: {np.max(scores):.4f}")
         
         # 5. Confident Filtering
-        conf_threshold = 0.45
+        conf_threshold = 0.35
         confidences = np.max(scores, axis=1)
         class_ids = np.argmax(scores, axis=1)
         mask = confidences > conf_threshold
@@ -81,15 +81,17 @@ class AppleInference:
             nms_boxes, 
             filtered_confidences.tolist(), 
             conf_threshold, 
-            0.45
+            0.4
         )
         
         print(f"Detection after NMS: {len(indexes) if len(indexes) > 0 else 0}")
         
         # 8. Process final results ito fit model for apple detection 
-        count_healthy = 0
-        count_damaged = 0
-        count_green = 0
+        count_red_apple = 0
+        count_green_apple = 0
+        count_healthy_apple = 0
+        count_damaged_apple = 0
+        
         
         #Box settings
         final_boxes = []
@@ -123,29 +125,32 @@ class AppleInference:
                 
                 if label_id == 0:
                     
-                    count_healthy += 1
+                    count_red_apple += 1
+                    count_healthy_apple += 1
                     
                 elif label_id == 1:
                     
-                    count_damaged += 1
+                    count_damaged_apple += 1
                     
                 elif label_id == 2 :
                     
-                    count_green += 1 
+                    count_green_apple += 1 
+                    count_healthy_apple += 1
                     
                 else :
                     
                     continue 
         
         # Apple Detection 
-        print(f"Apples Estimation - Healthy: {count_healthy}, Damaged: {count_damaged} ,  Green Apples {count_green}")
+        print(f"Apples Estimation - Healthy: {count_healthy_apple}, Damaged: {count_damaged_apple} ,  Green Apples {count_green_apple}")
         
         return {
             "counts": {
-                "apple": count_healthy,
-                "damaged_apple": count_damaged,
-                "green_apple" : count_green,
-                "total": count_healthy + count_damaged + count_green
+                "red_apple": count_red_apple,
+                "green_apple": count_green_apple,
+                "healthy":  count_healthy_apple,
+                "damaged_apple": count_damaged_apple,
+                "total": count_red_apple + count_green_apple + count_damaged_apple
             },
             "detections": {
                 "boxes": final_boxes,
