@@ -24,20 +24,20 @@ def get_current_user(
     db: Session = Depends(get_db)
 ) -> User:
     """
-    Dependency to Auth User.
-    
-    REQUIERED : If Not token then Forbidden
-    
+    Get the currently authenticated user (required).
+
+    Validates JWT from Authorization: Bearer header.
+    Raises 401 if token is missing, invalid, expired, or user not found.
+
     Args:
-        credentials: JWT  for Auth Header
-        db: Init DB Session 
-        
+        credentials: JWT token from header
+        db: Database session
+
     Returns:
-        User: Authenticated User 
-        
+        User: Authenticated database user
+
     Raises:
-        HTTPException 401: if not token || invalid token 
-        
+        HTTPException 401: Invalid or missing credentials
     """
     token = credentials.credentials
     
@@ -113,6 +113,7 @@ def get_current_user_optional(
         user_id: int = payload.get("sub")
         
         if user_id is None:
+            
             return None
         
     except JWTError:

@@ -9,6 +9,11 @@ import hmac
 # Load environment variables from .env file
 load_dotenv()
 
+APP_NAME = os.getenv("APP_NAME", "Yield Estimator API")
+APP_VERSION = os.getenv("APP_VERSION", "0.1.0")
+APP_DESCRIPTION = os.getenv("APP_DESCRIPTION", "API For Apple Yield Estimator using YOLOv8")
+DEBUG = os.getenv("DEBUG", "False")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 
 SECRET_KEY = os.getenv("SECRET_KEY")

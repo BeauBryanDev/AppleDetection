@@ -4,7 +4,9 @@ from fastapi.staticfiles import StaticFiles
 import os
 from app.api.v1.endpoints import estimator, history, analytics, users, farming, auth
 from app.db.session import engine, Base
+from app.core.config import settings
 from app.db import models  # Import models package to register all models
+from app.core.logging import configure_logging, RequestContextMiddleware
 import uvicorn
 import logging
 
@@ -24,9 +26,9 @@ except Exception as e:
 
 # Create FastAPI app instance
 app = FastAPI(
-    title="Yield Estimator API",
-    description="API for crop yield estimation using computer vision",
-    version="1.0.0",
+    title=settings.APP_NAME,
+    description=settings.APP_DESCRIPTION,
+    version=settings.APP_VERSION,
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -103,6 +105,12 @@ async def startup_event():
     print("Iniciando Apple Yield Estimator API...")
     print("Cargando modelo ONNX...")
     print("API lista para recibir requests")
+    configure_logging()
+    logger.info(
+        f"Application startup complete - Version: {settings.APP_VERSION}, Debug: {settings.DEBUG}"
+    )
+
+app.add_middleware(RequestContextMiddleware)
 
 
 app.include_router(
@@ -152,7 +160,7 @@ async def shutdown_event():
 
 #app.include_router(history.router, prefix="/api/history", tags=["history"])
 
-
+app.add_middleware(RequestContextMiddleware)
 
 if __name__ == "__main__":
     import uvicorn

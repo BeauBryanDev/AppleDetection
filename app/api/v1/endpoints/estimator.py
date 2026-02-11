@@ -25,27 +25,28 @@ def validate_orchard_and_tree(
     db: Session
 ) -> tuple[Optional[models.Orchard], Optional[models.Tree]]:
     """
-    Valida que el orchard y tree existen y pertenecen al usuario.
-    
+    Validate that the orchard and tree exist and belong to the user.
+
     Args:
-        orchard_id: ID del orchard (opcional para guest mode)
-        tree_id: ID del árbol (opcional)
-        current_user: Usuario autenticado
-        db: Sesión de base de datos
-        
+        orchard_id: Orchard ID (optional for guest mode)
+        tree_id: Tree ID (optional)
+        current_user: Authenticated user
+        db: Database session
+
     Returns:
-        tuple: (orchard, tree) validados o (None, None) si no aplica
-        
+        tuple: (orchard, tree) if validated, or (None, None) if not applicable
+
     Raises:
-        HTTPException 400: Si faltan datos requeridos
-        HTTPException 404: Si orchard/tree no existen
-        HTTPException 403: Si no tiene permisos
+        HTTPException 400: If required data is missing
+        HTTPException 404: If orchard/tree not found
+        HTTPException 403: If no permissions
     """
     # if not orchard_id , return None for guest ussage. 
     if orchard_id is None:
+        
         return None, None
     
-    # Si there is orchard, validate that it exist
+    # Validate orchard exists
     orchard = db.query(models.Orchard).filter(
         models.Orchard.id == orchard_id
     ).first()
@@ -73,7 +74,7 @@ def validate_orchard_and_tree(
         models.Tree.id == tree_id,
         models.Tree.orchard_id == orchard_id
     ).first()
-    
+    # If no tree_id, return validated orchard only
     if not tree:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -85,13 +86,13 @@ def validate_orchard_and_tree(
 
 def validate_image_file(file: UploadFile):
     """
-    Valida que el archivo sea una imagen válida.
-    
+    Validate that the uploaded file is a valid image.
+
     Args:
-        file: Archivo subido
-        
+        file: Uploaded file
+
     Raises:
-        HTTPException 400: Si el formato no es válido
+        HTTPException 400: If format is invalid
     """
     allowed_types = ["image/jpeg", "image/png", "image/jpg"]
     
@@ -110,59 +111,46 @@ async def create_yield_estimate(
     tree_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(deps.get_current_user_optional)
-):
+) :
     """
-    Ejecuta detección de manzanas en una imagen.
-    
-    MODO DE OPERACIÓN:
-    1. GUEST MODE (sin autenticación):
-       - orchard_id y tree_id deben ser None
-       - Solo guarda en YieldRecord
-       - user_id = None
-       
-    2. AUTHENTICATED MODE (con token):
-       - Puede enviar orchard_id y tree_id (opcional)
-       - Si envía orchard_id, valida ownership
-       - Guarda en YieldRecord + estructura completa
-       - user_id asignado automáticamente
-    
+    Run apple detection on an uploaded image.
+
+    OPERATION MODES:
+    1. GUEST MODE (no authentication):
+       - orchard_id and tree_id are optional/ignored
+       - No DB save; returns inference results only
+    2. AUTHENTICATED MODE:
+       - orchard_id required for traceability
+       - tree_id optional
+       - Saves to DB: Image, Prediction, Detections, YieldRecord
+
     Args:
-        file: Imagen a procesar (JPG/PNG)
-        orchard_id: ID del orchard (opcional)
-        tree_id: ID del árbol (opcional)
-        
+        file: Image file to process
+        orchard_id: Orchard ID (required for auth mode)
+        tree_id: Tree ID (optional)
+        db: Database session
+        current_user: Optional authenticated user
+
     Returns:
-        Response: Imagen procesada con detecciones dibujadas
-        
-    Headers de respuesta:
-        X-Healthy-Count: Número de manzanas sanas
-        X-Damaged-Count: Número de manzanas dañadas
-        X-Total-Count: Total de manzanas detectadas
-        X-Health-Index: Índice de salud (%)
-        X-Record-ID: ID del registro en YieldRecord
-        X-Prediction-ID: ID de la predicción (solo en modo authenticated)
-        X-Mode: "guest" o "authenticated"
-        
+        YieldEstimateResponse: Yield counts, health index, processed image (JPEG)
+
     Raises:
-        400: Formato de imagen inválido o datos faltantes
-        403: Intento de acceder a orchard/tree de otro usuario
-        404: Orchard o tree no encontrado
-        500: Error en el servidor
+        HTTPException: On validation or processing errors
     """
-    # 1. VALIDACIONES INICIALES - NO MODIFICAR
+
     validate_image_file(file)
     
-    # Determinar modo de operación
+
     is_guest_mode = current_user is None
     
-    # En modo guest, no se permite orchard_id/tree_id
+    #   Guest mode: no orchard_id/tree_id
     if is_guest_mode and (orchard_id is not None or tree_id is not None):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Guest users cannot specify orchard_id or tree_id. Please login first."
         )
     
-    # En modo authenticated, validar orchard y tree si se proporcionan
+    # Validate orchard and tree if in auth mode
     orchard = None
     tree = None
     if not is_guest_mode and orchard_id is not None:
@@ -174,9 +162,7 @@ async def create_yield_estimate(
         )
     
 
-    # 2. LEER Y VALIDAR IMAGEN
-
-    
+    # Read image bytes for inference
     try:
         start_time = time.time()
         image_bytes = await file.read()
@@ -187,7 +173,7 @@ async def create_yield_estimate(
                 detail="Empty image file"
             )
 
-        # 3. EJECUTAR INFERENCIA DEL MODELO
+        # Run inference
 
         detection_results = model_engine.run_inference(image_bytes)
         print(f"\n{'='*60}")
@@ -195,7 +181,7 @@ async def create_yield_estimate(
         print(f"Resultados: {detection_results}")
         print(f"{'='*60}\n")
         
-        # Logging para debugging
+        #   Logging for debugging
         print(f"\n{'='*60}")
         print(f" File: {file.filename}")
         print(f" User: {current_user.name if current_user else 'GUEST'}")
@@ -204,7 +190,7 @@ async def create_yield_estimate(
         print(f" Results: {detection_results['counts']}")
         print(f"{'='*60}\n")
         
-        # Extraer resultados
+        #   Extract results
         counts = detection_results["counts"]
         detections_data = detection_results["detections"]
         red_apples = counts["red_apple"] 
@@ -218,13 +204,13 @@ async def create_yield_estimate(
         inference_time = round((time.time() - start_time) * 1000, 2)
         
   
-        # 4. PERSISTENCIA DUAL (GUEST vs AUTHENTICATED)
+        #   Save to DB (GUEST vs AUTHENTICATED)
         
-        # Generar filename único
+        #   Generate unique filename for storage and record
         unique_filename = f"{uuid.uuid4()}_{file.filename}"
         image_save_path = f"uploads/{unique_filename}"
         
-        # --- PASO 1: SIEMPRE guardar en YieldRecord (historial global) ---
+        # Always save to YieldRecord (global history)
         new_record = models.YieldRecord(
             filename=unique_filename,
             healthy_count=healthy,
@@ -234,11 +220,11 @@ async def create_yield_estimate(
             user_id=current_user.id if current_user else None
         )
         db.add(new_record)
-        db.flush()  # Para obtener el ID
+        db.flush() 
         
-        # --- PASO 2: SI MODO AUTHENTICATED + orchard_id → Guardar estructura completa ---
+        # Initialize prediction_id (will be set if authenticated and saving to DB)
         prediction_id = None
-        
+        print(f" Record saved with ID: {new_record.id}")
         if not is_guest_mode and orchard_id is not None:
             # 2.1 Guardar Image
             new_image = models.Image(
@@ -262,8 +248,9 @@ async def create_yield_estimate(
             )
             db.add(new_prediction)
             db.flush()
+            print(f" Prediction saved with ID: {new_prediction.id}")
             prediction_id = new_prediction.id
-            
+            print(f" Prediction ID: {prediction_id}")
             # 2.3 Guardar Detections (Bulk insert)
             if len(detections_data["boxes"]) > 0:
                 new_detections = [
@@ -353,17 +340,16 @@ async def get_estimation_history(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Obtiene el historial de estimaciones del usuario actual.
-    
-    Solo muestra registros del usuario autenticado.
-    ADMIN puede ver todo con un endpoint separado.
-    
+    Get the user's estimation history.
+
+    Shows only the authenticated user's records (admin separate endpoint possible).
+
     Args:
-        skip: Número de registros a saltar (paginación)
-        limit: Número máximo de registros a retornar
-        
+        skip: Number of records to skip (pagination)
+        limit: Max records to return
+
     Returns:
-        List[YieldRecord]: Historial de estimaciones
+        list[YieldRecord]: Estimation history
     """
     records = db.query(models.YieldRecord).filter(
         models.YieldRecord.user_id == current_user.id
@@ -380,10 +366,10 @@ async def get_user_stats(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Obtiene estadísticas globales del usuario.
-    
+    Get global user statistics.
+
     Returns:
-        dict: Estadísticas de detecciones del usuario
+        dict: User detection stats
     """
     from sqlalchemy import func
     
@@ -411,19 +397,19 @@ async def delete_estimation_record(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Elimina un registro de estimación.
-    
-    Solo el dueño (o ADMIN) puede eliminar.
-    
+    Delete an estimation record.
+
+    Only the owner (or ADMIN) can delete.
+
     Args:
-        record_id: ID del registro a eliminar
-        
+        record_id: Record ID to delete
+
     Returns:
-        dict: Mensaje de confirmación
-        
+        dict: Confirmation message
+
     Raises:
-        404: Si el registro no existe
-        403: Si no tiene permisos
+        404: If record not found
+        403: If no permissions
     """
     record = db.query(models.YieldRecord).filter(
         models.YieldRecord.id == record_id
@@ -435,7 +421,7 @@ async def delete_estimation_record(
             detail=f"Record {record_id} not found"
         )
     
-    # Validar ownership (excepto ADMIN)
+    # Validate ownership (unless admin)
     if current_user.role != UserRole.ADMIN:
         if record.user_id != current_user.id:
             raise HTTPException(
@@ -443,7 +429,7 @@ async def delete_estimation_record(
                 detail="You can only delete your own records"
             )
     
-    # Eliminar archivo físico si existe
+    # Delete physical file if exists
     if os.path.exists(f"uploads/{record.filename}"):
         os.remove(f"uploads/{record.filename}")
     

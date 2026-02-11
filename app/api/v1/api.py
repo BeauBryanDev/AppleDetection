@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import estimator, history, analytics, users, farming
 from app.api.v1.endpoints import auth
 
-api_router = APIRouter()
+api_router = APIRouter(prefix="/v1")
 
 
 api_router.include_router(estimator.router, prefix="/estimator", tags=["Estimator"])
