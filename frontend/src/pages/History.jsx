@@ -8,15 +8,20 @@ import {
   AlertTriangle,
   CheckCircle2,
   Calendar,
-  Image as ImageIcon
+  Image as ImageIcon,
+  X,
+  ZoomIn
 } from 'lucide-react';
 import { getAllEstimatesRequest, deleteEstimateRequest } from '../api/history';
+
+const API_BASE_URL = 'http://localhost:8000';
 
 export default function HistoryPage() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [pagination, setPagination] = useState({ skip: 0, limit: 50 });
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     loadHistory();
@@ -149,6 +154,7 @@ export default function HistoryPage() {
             <thead className="text-xs text-zinc-500 uppercase bg-black/40 font-mono">
               <tr>
                 <th className="px-6 py-3">ID</th>
+                <th className="px-6 py-3">Imagen</th>
                 <th className="px-6 py-3">Archivo</th>
                 <th className="px-6 py-3 text-center">Sanas</th>
                 <th className="px-6 py-3 text-center">Dañadas</th>
@@ -165,7 +171,30 @@ export default function HistoryPage() {
                     <span className="text-white font-mono">#{record.id}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-white font-medium truncate max-w-xs">
+                    {record.filename ? (
+                      <div className="relative group">
+                        <img
+                          src={`${API_BASE_URL}/outputs/${record.filename}`}
+                          alt={record.filename}
+                          className="w-16 h-16 object-cover rounded-lg border-2 border-zinc-700 hover:border-apple-green cursor-pointer transition-all hover:shadow-lg hover:shadow-apple-green/20 hover:scale-105"
+                          onClick={() => setSelectedImage(record)}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64"%3E%3Crect fill="%23333" width="64" height="64"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23666"%3E?%3C/text%3E%3C/svg%3E';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg pointer-events-none">
+                          <ZoomIn className="w-6 h-6 text-apple-green drop-shadow-lg" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-16 h-16 bg-zinc-800 rounded-lg flex items-center justify-center">
+                        <ImageIcon className="w-6 h-6 text-zinc-600" />
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-white font-medium truncate max-w-xs text-sm">
                       {record.filename || 'N/A'}
                     </div>
                   </td>
@@ -210,7 +239,7 @@ export default function HistoryPage() {
               ))}
               {filteredRecords.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-zinc-500">
+                  <td colSpan="9" className="px-6 py-12 text-center text-zinc-500">
                     {searchTerm
                       ? 'No se encontraron registros con ese criterio'
                       : 'No hay registros en el historial'}
@@ -254,6 +283,73 @@ export default function HistoryPage() {
           </div>
         )}
       </Card>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-6xl w-full max-h-[90vh] animate-in zoom-in-95 duration-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white hover:text-apple-green transition-colors rounded-full hover:bg-zinc-800/50"
+            >
+              <X className="w-8 h-8" />
+            </button>
+
+            {/* Image Info */}
+            <div className="absolute -top-12 left-0 text-white font-mono text-sm space-y-1">
+              <p className="text-zinc-400">Registro #{selectedImage.id}</p>
+              <p className="text-zinc-500 text-xs">{selectedImage.filename}</p>
+            </div>
+
+            {/* Main Image */}
+            <div className="bg-black rounded-lg overflow-hidden border-2 border-apple-green/30 shadow-2xl shadow-apple-green/10">
+              <img
+                src={`${API_BASE_URL}/outputs/${selectedImage.filename}`}
+                alt={selectedImage.filename}
+                className="w-full h-auto max-h-[85vh] object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            {/* Image Stats */}
+            <div className="mt-4 grid grid-cols-4 gap-4" onClick={(e) => e.stopPropagation()}>
+              <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
+                <div className="text-center">
+                  <p className="text-xs text-zinc-500 mb-1">Sanas</p>
+                  <p className="text-2xl font-bold text-apple-green">{selectedImage.healthy_count || 0}</p>
+                </div>
+              </Card>
+              <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
+                <div className="text-center">
+                  <p className="text-xs text-zinc-500 mb-1">Dañadas</p>
+                  <p className="text-2xl font-bold text-apple-red">{selectedImage.damaged_count || 0}</p>
+                </div>
+              </Card>
+              <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
+                <div className="text-center">
+                  <p className="text-xs text-zinc-500 mb-1">Total</p>
+                  <p className="text-2xl font-bold text-white">{selectedImage.total_count || 0}</p>
+                </div>
+              </Card>
+              <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
+                <div className="text-center">
+                  <p className="text-xs text-zinc-500 mb-1">Índice Salud</p>
+                  <p className={`text-2xl font-bold ${
+                    selectedImage.health_index >= 80 ? 'text-apple-green' :
+                    selectedImage.health_index >= 50 ? 'text-yellow-500' : 'text-red-500'
+                  }`}>
+                    {selectedImage.health_index?.toFixed(1) || 0}%
+                  </p>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/Login';
 import RegisterPage from './pages/Register';
 import { DashboardLayout } from './layouts/DashboardLayout';
@@ -14,29 +14,44 @@ import ProfilePage from './pages/Profile';
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Rutas Públicas */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-
-          {/* Redirección raíz */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-          {/* Rutas Protegidas (Layout aplica a todas estas) */}
-          <Route element={<DashboardLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/estimator" element={<EstimatorPage />} />
-            <Route path="/farming" element={<FarmingPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/history" element={<HistoryPage />} />
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-          </Route>
-
-        </Routes>
-      </BrowserRouter>
+      <AppContent />
     </AuthProvider>
+  );
+}
+
+function AppContent() {
+  const { isAuthenticated, isGuest } = useAuth();
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Rutas Públicas */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        {/* Redirección raíz inteligente */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" replace /> :
+              isGuest ? <Navigate to="/estimator" replace /> :
+                <Navigate to="/login" replace />
+          }
+        />
+
+        {/* Rutas Protegidas (Layout aplica a todas estas) */}
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/estimator" element={<EstimatorPage />} />
+          <Route path="/farming" element={<FarmingPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
+
+      </Routes>
+    </BrowserRouter>
   );
 }
 

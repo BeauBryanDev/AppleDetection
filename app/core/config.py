@@ -1,6 +1,6 @@
 from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, validator
+from pydantic import Field, field_validator, validator
 import os
 from pathlib import Path
 
@@ -11,8 +11,13 @@ class Settings(BaseSettings):
     
     Priority: Env vars > .env file > default values
     """
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_ignore_empty=True,
+        extra='ignore'
+    )
     
-    # APLICACIÓN
+    # Application metadata
     
     APP_NAME: str = "Apple Yield Estimator API"
     APP_VERSION: str = "2.0.0"
@@ -21,13 +26,13 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=False, env="DEBUG")
     LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
     
-    # SERVER
+    # SERVER Configuration - Uvicorn/Gunicorn
     
     HOST: str = Field(default="0.0.0.0", env="HOST")
     PORT: int = Field(default=8000, env="PORT")
     WORKERS: int = Field(default=1, env="WORKERS")
     
-    # SEGURIDAD Y JWT
+    # Security and JWT
     
     # SECRET_KEY: CRÍTICO -  .env
     SECRET_KEY: str = Field(..., env="SECRET_KEY")
@@ -41,7 +46,8 @@ class Settings(BaseSettings):
         env="ACCESS_TOKEN_EXPIRE_MINUTES"
     )
     
-    @validator("SECRET_KEY")
+    @field_validator("SECRET_KEY")
+    @classmethod
     def validate_secret_key(cls, v):
         """SECRET KEY must no be sent to Production."""
         if not v:
@@ -74,11 +80,14 @@ class Settings(BaseSettings):
         env="BACKEND_CORS_ORIGINS"
     )
     
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
     def assemble_cors_origins(cls, v):
         """Comman Sperate String -> List"""
         if isinstance(v, str):
+            
             return [origin.strip() for origin in v.split(",")]
+        
         return v
 
     # DATABASE (PostgreSQL)
@@ -89,32 +98,34 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = Field(default="yield_estimator", env="POSTGRES_DB")
     POSTGRES_PORT: int = Field(default=5432, env="POSTGRES_PORT")
     
-    # URI de conexión (auto-generada)
+    # Auto-generated DB URI (PostgreSQL)
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
     
-    @validator("SQLALCHEMY_DATABASE_URI", pre=True, always=True)
-    def assemble_db_connection(cls, v, values):
-        """Construye la URI de conexión a la base de datos."""
+    @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v, info):
+        """Build the database connection URI if not explicitly set."""
         if isinstance(v, str) and v:
             return v
         
+        # In Pydantic v2, access data through info.data
+        data = info.data if hasattr(info, 'data') else {}
+        
         return (
-            f"postgresql://{values.get('POSTGRES_USER')}:"
-            f"{values.get('POSTGRES_PASSWORD')}@"
-            f"{values.get('POSTGRES_SERVER')}:"
-            f"{values.get('POSTGRES_PORT')}/"
-            f"{values.get('POSTGRES_DB')}"
+            f"postgresql://{data.get('POSTGRES_USER', 'postgres')}:"
+            f"{data.get('POSTGRES_PASSWORD', 'postgres')}@"
+            f"{data.get('POSTGRES_SERVER', 'localhost')}:"
+            f"{data.get('POSTGRES_PORT', 5432)}/"
+            f"{data.get('POSTGRES_DB', 'yield_estimator')}"
         )
     
-    # Pool de conexiones
+    # DB CONNECTION POOL
     DB_POOL_SIZE: int = Field(default=5, env="DB_POOL_SIZE")
     DB_MAX_OVERFLOW: int = Field(default=10, env="DB_MAX_OVERFLOW")
     DB_POOL_TIMEOUT: int = Field(default=30, env="DB_POOL_TIMEOUT")
     
-    # ============================================
-    # MODELO ML (YOLOv8)
-    # ============================================
-    
+
+    # ML Model configuration
     MODEL_PATH: str = Field(
         default="app/models/weights/best_model.onnx",
         env="MODEL_PATH"
@@ -134,15 +145,11 @@ class Settings(BaseSettings):
     
     NMS_THRESHOLD: float = Field(default=0.45, env="NMS_THRESHOLD")
     
-    # Model Classes,  Now they are three
+    # Model Classes,  Now they are three (apple, damaged_apple)
     MODEL_CLASSES: List[str] = Field(
         default=["apple", "damaged_apple"],
         env="MODEL_CLASSES"
     )
-    
-
-    # ARCHIVO/IMAGEN
-
     
     MAX_FILE_SIZE_MB: int = Field(default=10, env="MAX_FILE_SIZE_MB")
     
@@ -198,7 +205,6 @@ class Settings(BaseSettings):
 
     # PYDANTIC SETTINGS
 
-    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -206,24 +212,14 @@ class Settings(BaseSettings):
         extra="ignore"  # Ignorar variables extra en .env
     )
 
-
+# Global settings instance
 settings = Settings()
 
 # HELPERS 
 
 def get_settings() -> Settings:
-    """
-    Obtiene la instancia de settings.
-    
-    Útil para dependency injection en FastAPI.
-    
-    Example:
-        from app.core.config import get_settings
-        
-        @router.get("/config")
-        async def get_config(settings: Settings = Depends(get_settings)):
-            return {"app_name": settings.APP_NAME}
-    """
+    """Returns the global settings instance."""
+
     return settings
 
 
@@ -289,40 +285,39 @@ def print_settings():
 
 def validate_settings():
     """
-    Valida que la configuración sea correcta antes de iniciar.
-    
+    Validate configuration before app startup.
+
     Raises:
-        ValueError: Si alguna configuración es inválida
-        FileNotFoundError: Si el modelo no existe
-        
-    Example:
-        # En main.py
+        ValueError: If any critical settings are invalid
+        FileNotFoundError: If model file doesn't exist
+
+    Example usage in main.py:
         @app.on_event("startup")
         async def startup():
             validate_settings()
     """
     errors = []
     
-    # Validar que el modelo existe
+    # Check model exists
     model_path = Path(settings.MODEL_PATH)
     if not model_path.exists():
         errors.append(f"❌ Model not found: {settings.MODEL_PATH}")
     
-    # Validar thresholds
+    # Validate thresholds
     if not 0 < settings.CONFIDENCE_THRESHOLD < 1:
         errors.append("❌ CONFIDENCE_THRESHOLD must be between 0 and 1")
     
     if not 0 < settings.NMS_THRESHOLD < 1:
         errors.append("❌ NMS_THRESHOLD must be between 0 and 1")
     
-    # Validar directorio de uploads
+    # Ensure upload dir exists
     upload_dir = Path(settings.UPLOAD_DIR)
     if not upload_dir.exists():
         print(f"⚠️  Upload directory '{settings.UPLOAD_DIR}' does not exist. Creating...")
         upload_dir.mkdir(parents=True, exist_ok=True)
         print(f"✅ Created upload directory: {settings.UPLOAD_DIR}")
     
-    # Validar SECRET_KEY en producción
+    ## Warn on weak SECRET_KEY in production
     if not settings.DEBUG and len(settings.SECRET_KEY) < 32:
         errors.append(
             "⚠️  WARNING: SECRET_KEY should be at least 32 characters in production. "
@@ -365,3 +360,6 @@ def get_cors_origins() -> List[str]:
         List[str]: Lista de orígenes
     """
     return settings.BACKEND_CORS_ORIGINS
+
+
+

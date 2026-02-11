@@ -4,7 +4,7 @@ import { Sidebar } from '../components/common/Sidebar';
 import { Header } from '../components/common/Header';
 
 export function DashboardLayout() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isGuest, loading } = useAuth();
 
   // 1. Si está cargando (verificando token), mostramos un spinner
   if (loading) {
@@ -15,8 +15,8 @@ export function DashboardLayout() {
     );
   }
 
-  // 2. Si NO está autenticado, lo mandamos al Login
-  if (!isAuthenticated) {
+  // 2. Si NO está autenticado Y NO es guest, lo mandamos al Login
+  if (!isAuthenticated && !isGuest) {
     return <Navigate to="/login" replace />;
   }
 
@@ -29,7 +29,7 @@ export function DashboardLayout() {
       {/* Contenido Principal */}
       <main className="flex-1 ml-64 flex flex-col min-h-screen">
         <Header />
-        
+
         {/* Aquí se renderizan las páginas (Dashboard, Estimator, etc.) */}
         <div className="p-8 fade-in-animation">
           <Outlet />

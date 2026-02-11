@@ -8,14 +8,46 @@ import {
   Sprout,
   Activity,
   AlertTriangle,
-  ChevronDown
+  ChevronDown,
+  PieChart as PieChartIcon,
+  LineChart as LineChartIcon
 } from 'lucide-react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+  RadialBarChart,
+  RadialBar
+} from 'recharts';
 import {
   getUserSummaryRequest,
   getTreesSummaryRequest,
   getHealthTrendRequest
 } from '../api/analytics';
 import { getOrchardsRequest } from '../api/farming';
+
+// Cyberpunk color scheme
+const COLORS = {
+  healthy: '#39ff14',
+  damaged: '#ff073a',
+  total: '#00d4ff',
+  background: '#050505',
+  grid: '#1a1a1a'
+};
+
+const PIE_COLORS = ['#39ff14', '#ff073a', '#00d4ff', '#ff6b35', '#f7b731'];
 
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
@@ -61,7 +93,7 @@ export default function AnalyticsPage() {
     try {
       const [treesRes, trendRes] = await Promise.all([
         getTreesSummaryRequest(orchardId),
-        getHealthTrendRequest(orchardId, 10)
+        getHealthTrendRequest(orchardId, 15)
       ]);
 
       setTreesSummary(treesRes.data);
@@ -81,6 +113,74 @@ export default function AnalyticsPage() {
   }
 
   const globalStats = userSummary?.global_summary || {};
+
+  // Prepare data for global pie chart (total apples across all orchards)
+  const totalHealthy = userSummary?.orchards?.reduce((sum, o) => {
+    // Estimate healthy apples from total and health percentage
+    return sum + (o.apples_detected * (o.avg_health / 100));
+  }, 0) || 0;
+
+  const totalDamaged = (globalStats.total_apples_detected || 0) - totalHealthy;
+
+  const globalAppleData = [
+    { name: 'Sanas', value: Math.round(totalHealthy), color: COLORS.healthy },
+    { name: 'Dañadas', value: Math.round(totalDamaged), color: COLORS.damaged }
+  ];
+
+  // Prepare data for orchard comparison bar chart
+  const orchardComparisonData = userSummary?.orchards?.map(o => ({
+    name: o.orchard_name.length > 15 ? o.orchard_name.substring(0, 15) + '...' : o.orchard_name,
+    Manzanas: o.apples_detected,
+    Salud: o.avg_health
+  })) || [];
+
+  // Prepare health trend data for line chart
+  const trendChartData = healthTrend?.trend?.map(point => ({
+    fecha: new Date(point.timestamp).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
+    'Índice de Salud': point.health_index
+  })) || [];
+
+  // Progress bar component
+  const ProgressBar = ({ label, value, max, color, showPercentage = false }) => {
+    const percentage = (value / max) * 100;
+    return (
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-zinc-400 font-mono">{label}</span>
+          <span className="text-sm font-bold text-white">
+            {showPercentage ? `${value.toFixed(1)}%` : value}
+            {!showPercentage && <span className="text-zinc-600 ml-1">/ {max}</span>}
+          </span>
+        </div>
+        <div className="w-full bg-zinc-900 rounded-full h-3 overflow-hidden border border-zinc-800">
+          <div
+            className={`h-full rounded-full transition-all duration-1000 ease-out ${color} shadow-lg`}
+            style={{
+              width: `${Math.min(percentage, 100)}%`,
+              boxShadow: `0 0 10px ${color === 'bg-apple-green' ? '#39ff14' : color === 'bg-apple-red' ? '#ff073a' : '#00d4ff'}`
+            }}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Custom tooltip for charts
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-black/90 border border-apple-green/30 rounded-lg p-3 shadow-xl">
+          <p className="text-zinc-400 text-xs font-mono mb-1">{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} className="text-white font-bold text-sm" style={{ color: entry.color }}>
+              {entry.name}: {typeof entry.value === 'number' ? entry.value.toFixed(1) : entry.value}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6">
@@ -162,78 +262,126 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Orchards Summary Table */}
-      <div>
-        <h2 className="text-white font-bold mb-4 flex items-center gap-2">
-          <Trees className="w-5 h-5 text-apple-green" />
-          Resumen por Huerto
-        </h2>
-        <Card className="p-0 overflow-hidden border-zinc-800 bg-cyber-dark">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-zinc-500 uppercase bg-black/40 font-mono">
-                <tr>
-                  <th className="px-6 py-3">Huerto</th>
-                  <th className="px-6 py-3">Ubicación</th>
-                  <th className="px-6 py-3 text-center">Árboles</th>
-                  <th className="px-6 py-3 text-center">Imágenes</th>
-                  <th className="px-6 py-3 text-center">Manzanas</th>
-                  <th className="px-6 py-3 text-center">Salud Promedio</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/50">
-                {userSummary?.orchards?.map((orchard) => (
-                  <tr key={orchard.orchard_id} className="hover:bg-zinc-800/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="text-white font-medium">{orchard.orchard_name}</div>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-400">{orchard.location}</td>
-                    <td className="px-6 py-4 text-center text-white font-mono">{orchard.n_trees}</td>
-                    <td className="px-6 py-4 text-center text-white font-mono">{orchard.images_processed}</td>
-                    <td className="px-6 py-4 text-center text-white font-mono">{orchard.apples_detected}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-bold ${
-                          orchard.avg_health >= 80
-                            ? 'bg-apple-green/10 text-apple-green'
-                            : orchard.avg_health >= 50
-                            ? 'bg-yellow-500/10 text-yellow-500'
-                            : 'bg-red-500/10 text-red-500'
-                        }`}
-                      >
-                        {orchard.avg_health.toFixed(1)}%
-                      </span>
-                    </td>
-                  </tr>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Global Apple Distribution Pie Chart */}
+        <Card className="p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
+          <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+            <PieChartIcon className="w-5 h-5 text-apple-green" />
+            Distribución Global de Manzanas
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={globalAppleData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {globalAppleData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
-                {(!userSummary?.orchards || userSummary.orchards.length === 0) && (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-zinc-500">
-                      No hay huertos registrados
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="text-center p-3 bg-apple-green/10 rounded-lg border border-apple-green/30">
+              <p className="text-xs text-zinc-400 mb-1">Sanas</p>
+              <p className="text-2xl font-bold text-apple-green">{Math.round(totalHealthy)}</p>
+            </div>
+            <div className="text-center p-3 bg-apple-red/10 rounded-lg border border-apple-red/30">
+              <p className="text-xs text-zinc-400 mb-1">Dañadas</p>
+              <p className="text-2xl font-bold text-apple-red">{Math.round(totalDamaged)}</p>
+            </div>
           </div>
         </Card>
+
+        {/* Orchard Comparison Bar Chart */}
+        <Card className="p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
+          <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-apple-green" />
+            Comparación por Huerto
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={orchardComparisonData}>
+              <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
+              <XAxis
+                dataKey="name"
+                stroke="#666"
+                tick={{ fill: '#999', fontSize: 11 }}
+                angle={-15}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis stroke="#666" tick={{ fill: '#999' }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="Manzanas" fill={COLORS.total} radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
       </div>
+
+      {/* Orchards Progress Bars */}
+      <Card className="p-6 border-zinc-800 bg-cyber-dark">
+        <h3 className="text-white font-bold mb-6 flex items-center gap-2">
+          <Trees className="w-5 h-5 text-apple-green" />
+          Métricas por Huerto
+        </h3>
+        <div className="space-y-6">
+          {userSummary?.orchards?.map((orchard) => (
+            <div key={orchard.orchard_id} className="p-4 rounded-lg bg-zinc-900/30 border border-zinc-800">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-white font-medium">{orchard.orchard_name}</h4>
+                <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-1 rounded">
+                  {orchard.location}
+                </span>
+              </div>
+              <div className="space-y-3">
+                <ProgressBar
+                  label="Árboles"
+                  value={orchard.n_trees}
+                  max={Math.max(...(userSummary.orchards.map(o => o.n_trees)), 10)}
+                  color="bg-blue-500"
+                />
+                <ProgressBar
+                  label="Manzanas Detectadas"
+                  value={orchard.apples_detected}
+                  max={Math.max(...(userSummary.orchards.map(o => o.apples_detected)), 10)}
+                  color="bg-apple-green"
+                />
+                <ProgressBar
+                  label="Índice de Salud"
+                  value={orchard.avg_health}
+                  max={100}
+                  color={orchard.avg_health >= 80 ? 'bg-apple-green' : orchard.avg_health >= 50 ? 'bg-yellow-500' : 'bg-apple-red'}
+                  showPercentage
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Orchard Details Section */}
       {selectedOrchard && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Trees Summary */}
-          <div>
+          {/* Health Trend Line Chart */}
+          <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-white font-bold flex items-center gap-2">
-                <Sprout className="w-5 h-5 text-apple-green" />
-                Análisis por Árbol
+                <LineChartIcon className="w-5 h-5 text-apple-green" />
+                Tendencia de Salud - {selectedOrchard.name}
               </h2>
               {/* Orchard Selector */}
               <div className="relative">
                 <button
                   onClick={() => setShowOrchardDropdown(!showOrchardDropdown)}
-                  className="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white text-sm flex items-center gap-2 hover:bg-zinc-800"
+                  className="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white text-sm flex items-center gap-2 hover:bg-zinc-800 hover:border-apple-green/30 transition-all"
                 >
                   {selectedOrchard.name}
                   <ChevronDown className="w-4 h-4" />
@@ -247,7 +395,9 @@ export default function AnalyticsPage() {
                           setSelectedOrchard(orchard);
                           setShowOrchardDropdown(false);
                         }}
-                        className="w-full px-4 py-2 text-left text-white hover:bg-zinc-800 text-sm transition-colors"
+                        className={`w-full px-4 py-2 text-left text-white hover:bg-zinc-800 text-sm transition-colors ${
+                          selectedOrchard.id === orchard.id ? 'bg-zinc-800 border-l-2 border-apple-green' : ''
+                        }`}
                       >
                         {orchard.name}
                       </button>
@@ -257,14 +407,55 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            <Card className="p-4 border-zinc-800 bg-cyber-dark max-h-[400px] overflow-y-auto">
+            <Card className="p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={trendChartData}>
+                  <defs>
+                    <linearGradient id="colorHealth" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS.healthy} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={COLORS.healthy} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
+                  <XAxis
+                    dataKey="fecha"
+                    stroke="#666"
+                    tick={{ fill: '#999', fontSize: 11 }}
+                  />
+                  <YAxis
+                    stroke="#666"
+                    tick={{ fill: '#999' }}
+                    domain={[0, 100]}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="Índice de Salud"
+                    stroke={COLORS.healthy}
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorHealth)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+
+          {/* Trees Summary */}
+          <div>
+            <h2 className="text-white font-bold mb-4 flex items-center gap-2">
+              <Sprout className="w-5 h-5 text-apple-green" />
+              Análisis por Árbol
+            </h2>
+
+            <Card className="p-4 border-zinc-800 bg-cyber-dark max-h-[500px] overflow-y-auto custom-scrollbar">
               <div className="space-y-2">
                 {treesSummary?.trees?.map((tree) => (
                   <div
                     key={tree.tree_id}
-                    className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-all"
+                    className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800 hover:border-apple-green/30 transition-all hover:shadow-lg hover:shadow-apple-green/10"
                   >
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="text-white font-medium">#{tree.tree_code}</h4>
                         <p className="text-xs text-zinc-500">{tree.tree_type || 'Sin tipo'}</p>
@@ -272,18 +463,28 @@ export default function AnalyticsPage() {
                       <span
                         className={`px-2 py-1 rounded text-xs font-bold ${
                           tree.avg_health_index >= 80
-                            ? 'bg-apple-green/10 text-apple-green'
+                            ? 'bg-apple-green/10 text-apple-green border border-apple-green/30'
                             : tree.avg_health_index >= 50
-                            ? 'bg-yellow-500/10 text-yellow-500'
-                            : 'bg-red-500/10 text-red-500'
+                            ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30'
+                            : 'bg-red-500/10 text-red-500 border border-red-500/30'
                         }`}
                       >
                         {tree.avg_health_index.toFixed(1)}%
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400">
-                      <div>Imágenes: <span className="text-white">{tree.total_images}</span></div>
-                      <div>Manzanas: <span className="text-white">{tree.total_apples_detected}</span></div>
+                    <div className="space-y-2">
+                      <ProgressBar
+                        label="Imágenes"
+                        value={tree.total_images}
+                        max={Math.max(...(treesSummary.trees.map(t => t.total_images)), 5)}
+                        color="bg-purple-500"
+                      />
+                      <ProgressBar
+                        label="Manzanas"
+                        value={tree.total_apples_detected}
+                        max={Math.max(...(treesSummary.trees.map(t => t.total_apples_detected)), 10)}
+                        color="bg-apple-green"
+                      />
                     </div>
                   </div>
                 ))}
@@ -294,44 +495,50 @@ export default function AnalyticsPage() {
             </Card>
           </div>
 
-          {/* Health Trend */}
+          {/* Tree Health Radial Chart */}
           <div>
             <h2 className="text-white font-bold mb-4 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-apple-green" />
-              Tendencia de Salud
+              Salud Promedio por Árbol
             </h2>
-            <Card className="p-4 border-zinc-800 bg-cyber-dark">
-              <div className="space-y-3">
-                {healthTrend?.trend?.map((point, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <span className="text-xs text-zinc-600 font-mono w-32 flex-shrink-0">
-                      {new Date(point.timestamp).toLocaleDateString()}
-                    </span>
-                    <div className="flex-1 bg-zinc-900 rounded-full h-6 relative overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          point.health_index >= 80
-                            ? 'bg-apple-green'
-                            : point.health_index >= 50
-                            ? 'bg-yellow-500'
-                            : 'bg-red-500'
-                        }`}
-                        style={{ width: `${point.health_index}%` }}
-                      />
-                      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-                        {point.health_index.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {(!healthTrend?.trend || healthTrend.trend.length === 0) && (
-                  <p className="text-center text-zinc-600 py-8">No hay datos de tendencia</p>
-                )}
-              </div>
+            <Card className="p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart
+                  data={treesSummary?.trees?.slice(0, 8).map(t => ({
+                    name: `#${t.tree_code}`,
+                    Salud: t.avg_health_index
+                  })) || []}
+                  layout="vertical"
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
+                  <XAxis type="number" domain={[0, 100]} stroke="#666" tick={{ fill: '#999' }} />
+                  <YAxis dataKey="name" type="category" stroke="#666" tick={{ fill: '#999', fontSize: 11 }} width={60} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="Salud" fill={COLORS.healthy} radius={[0, 8, 8, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </Card>
           </div>
         </div>
       )}
+
+      {/* Custom scrollbar styles */}
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #1a1a1a;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #39ff14;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #2dd10f;
+        }
+      `}</style>
     </div>
   );
 }

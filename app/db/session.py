@@ -6,11 +6,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Si estais en Docker, Use del host será 'db', si es local será 'localhost'
+# Default to SQLite for local development/testing
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
 
 # If DATABASE_URL has environment variable placeholders, build it from individual vars
 if "${" in DATABASE_URL or not DATABASE_URL.startswith("sqlite"):
+    
     pg_user = os.getenv('POSTGRES_USER')
     pg_password = os.getenv('POSTGRES_PASSWORD')
     pg_host = os.getenv('DB_HOST', 'localhost')
@@ -25,10 +26,11 @@ if "${" in DATABASE_URL or not DATABASE_URL.startswith("sqlite"):
     else:
         
         print("PostgreSQL variables not set, falling back to SQLite")
-        DATABASE_URL = "sqlite:///./test.db"
+        DATABASE_URL = "sqlite:///./app_test_db.db"
 
 
-engine = create_engine(DATABASE_URL)
+# Create SQLAlchemy engine
+engine = create_engine(DATABASE_URL,echo=os.getenv("ENV") == "development")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -36,6 +38,12 @@ Base = declarative_base()
 #  Deps , FastAPI EndPoints Need Session Opens
 
 def get_db():
+    """
+    FastAPI dependency to provide a database session.
+
+    Yields a session and ensures it's closed after the request.
+    Usage in endpoints: def endpoint(db: Session = Depends(get_db))
+    """
     
     db = SessionLocal()
     

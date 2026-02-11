@@ -10,17 +10,23 @@ import { Sprout, Lock } from 'lucide-react'; // Iconos temáticos
 
 function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const { signin, isAuthenticated, errors: loginErrors, loading } = useAuth();
+  const { signin, enterAsGuest, isAuthenticated, isGuest, errors: loginErrors, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Si ya está logueado, redirigir al Dashboard
+  // Si ya está logueado, redirigir al Dashboard o Estimator si es guest
   useEffect(() => {
     if (isAuthenticated) navigate('/dashboard');
-  }, [isAuthenticated, navigate]);
+    if (isGuest) navigate('/estimator');
+  }, [isAuthenticated, isGuest, navigate]);
 
   const onSubmit = handleSubmit(async (data) => {
     await signin(data.email, data.password);
   });
+
+  const handleGuestAccess = () => {
+    enterAsGuest();
+    navigate('/estimator');
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-cyber-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-cyber-black to-cyber-black p-4">
@@ -72,6 +78,22 @@ function LoginPage() {
             <Lock className="w-4 h-4" /> INICIAR SESIÓN
           </Button>
         </form>
+
+        <div className="relative my-6 text-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-zinc-800"></div>
+          </div>
+          <span className="relative px-4 bg-cyber-dark text-zinc-500 text-xs font-mono">O CONTINUAR COMO</span>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-zinc-700 hover:border-zinc-500 text-zinc-300"
+          onClick={handleGuestAccess}
+        >
+          👤 INGRESAR COMO INVITADO (GUEST)
+        </Button>
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           ¿No tienes cuenta?{" "}

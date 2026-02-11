@@ -13,9 +13,9 @@ import clsx from 'clsx';
 import { useAuth } from '../../context/AuthContext';
 
 export function Sidebar() {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
 
-  const navItems = [
+  const allNavItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Zap, label: 'Estimador AI', path: '/estimator' },
     { icon: Trees, label: 'Mis Huertos', path: '/farming' },
@@ -25,6 +25,11 @@ export function Sidebar() {
     // Admin-only item
     ...(user?.role === 'admin' ? [{ icon: Shield, label: 'Usuarios', path: '/users' }] : []),
   ];
+
+  // Filter items for guest mode
+  const navItems = isGuest
+    ? allNavItems.filter(item => item.label === 'Estimador AI')
+    : allNavItems;
 
   return (
     <aside className="w-64 bg-cyber-dark border-r border-zinc-800 flex flex-col h-screen fixed left-0 top-0 z-50">

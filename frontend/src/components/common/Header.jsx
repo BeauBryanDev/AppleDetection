@@ -24,8 +24,8 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <div className="text-right hidden md:block">
-            <p className="text-sm font-bold text-white leading-none">{user?.name}</p>
-            <p className="text-xs text-zinc-500 font-mono mt-1 uppercase">{user?.role}</p>
+            <p className="text-sm font-bold text-white leading-none">{user?.name || 'Invitado'}</p>
+            <p className="text-xs text-zinc-500 font-mono mt-1 uppercase">{user?.role || 'GUEST'}</p>
           </div>
           <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center border border-zinc-700 text-apple-green">
             <User className="w-5 h-5" />

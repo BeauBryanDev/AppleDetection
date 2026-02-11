@@ -198,7 +198,7 @@ async def get_orchard(
 
 @router.post("/orchards", response_model=orchard_schema.Orchard, status_code=status.HTTP_201_CREATED)
 async def create_orchard(
-    orchard_data: orchard_schema.Create,
+    orchard_data: orchard_schema.OrchardCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
@@ -304,10 +304,8 @@ async def delete_orchard(
         "orchard_id": orchard_id
     }
 
+# TREE MANAGEMENT
 
-# ============================================
-# GESTIÓN DE ÁRBOLES (TREES)
-# ============================================
 
 @router.get("/orchard/{orchard_id}/trees", response_model=List[tree_schema.Tree])
 async def get_orchard_trees(
@@ -316,26 +314,26 @@ async def get_orchard_trees(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Obtiene todos los árboles de un orchard específico.
+   Get all trees from an Orchard id
     
-    Validaciones:
-    - El orchard debe existir
-    - El usuario debe ser el dueño (o ADMIN)
+    Validations;
+    - Orchard must exist
+    - User must own this orchard
     
     Args:
-        orchard_id: ID del orchard
+        orchard_id:
         
     Returns:
-        List[Tree]: Lista de árboles del orchard
+        List[Tree]: List of all trees standing in orchard
         
     Raises:
-        404: Si el orchard no existe
-        403: Si el usuario no tiene permisos
+        404: orchard does not exits
+        403: Not privilegues .
     """
-    # Validar ownership
+    # validate orchard ownership
     validate_orchard_ownership(orchard_id, current_user, db)
     
-    # Obtener árboles
+    # get trees
     trees = db.query(models.Tree).filter(
         models.Tree.orchard_id == orchard_id
     ).all()

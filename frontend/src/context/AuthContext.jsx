@@ -13,6 +13,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
 
@@ -23,7 +24,8 @@ export const AuthProvider = ({ children }) => {
       // Guardamos el token
       localStorage.setItem('token', res.data.access_token);
       setIsAuthenticated(true);
-      
+      setIsGuest(false);
+
       // Obtenemos los datos del usuario inmediatamente
       const userRes = await verifyTokenRequest();
       setUser(userRes.data);
@@ -34,10 +36,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const enterAsGuest = () => {
+    setIsGuest(true);
+    setIsAuthenticated(false);
+    setUser(null);
+    localStorage.removeItem('token');
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
     setIsAuthenticated(false);
+    setIsGuest(false);
   };
 
   // Efecto: Verificar si ya existe un token al recargar la página
@@ -58,6 +68,7 @@ export const AuthProvider = ({ children }) => {
           return;
         }
         setIsAuthenticated(true);
+        setIsGuest(false);
         setUser(res.data);
         setLoading(false);
       } catch (error) {
@@ -70,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ signin, logout, user, isAuthenticated, errors, loading }}>
+    <AuthContext.Provider value={{ signin, enterAsGuest, logout, user, isAuthenticated, isGuest, errors, loading, setUser }}>
       {children}
     </AuthContext.Provider>
   );

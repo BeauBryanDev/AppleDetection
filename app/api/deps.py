@@ -129,23 +129,19 @@ def get_current_active_user(
     current_user: User = Depends(get_current_user)
 ) -> User:
     """
-    Dependency to validate of is Active User 
-    
+    Dependency to validate of is Active User
+
     Args:
-        current_user: Auth User 
-        
+        current_user: Auth User
+
     Returns:
         User: Ative User
-        
+
     Raises:
         HTTPException 403: If user is not active user
     """
-    if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
-    
+    # Note: is_active field is not implemented in User model
+    # All authenticated users are considered active
     return current_user
 
 

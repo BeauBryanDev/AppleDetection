@@ -6,24 +6,58 @@ from pathlib import Path
 # Apple Detection Call Model 
 class AppleInference:
     
-    def __init__(self, model_path: str):
+    """
+    Inference engine for apple detection using exported YOLOv8 ONNX model.
+
+    Handles image preprocessing, model inference, NMS post-processing,
+    and color-based classification (red vs green apples) for healthy detections.
+    """
     
+    def __init__(self, model_path: str):
+        
+        """
+        Initialize the ONNX inference session.
+
+        Args:
+            model_path (str): Path to the .onnx model file
+
+        Raises:
+            FileNotFoundError: If model file does not exist
+        """
+        
         if not Path(model_path).exists():
     
             raise FileNotFoundError(f"No se encontró el modelo en: {model_path}")
             
         self.session = ort.InferenceSession(
+            # Use CPU provider for broad compatibility in low hardware environments
             model_path, 
             providers=['CPUExecutionProvider']
+            
         )
-        
+        # Get Input Name and Shape 
         self.input_name = self.session.get_inputs()[0].name
         self.input_shape = self.session.get_inputs()[0].shape
         print(f"Input shape: {self.input_shape}")
+        
         self.classes = ["apple", "damaged_apple"]
-
+    # Original training classes (YOLOv8 output)
     def _preprocess(self, img_bgr):
-        """Set the image to the model : Resize,  Normalitzation and axis change"""
+        """Set the image to the model : Resize,  Normalitzation and axis change
+           * Preprocess image for YOLOv8 ONNX input *(640x640, BGR → RGB, Normalize, CHW)*
+
+        - Resize to model input size (640x640)
+        - Convert BGR → RGB
+        - Normalize to [0,1]
+        - Transpose to CHW
+        - Add batch dimension
+
+        Args:
+            img_bgr: Original image in BGR (OpenCV format)
+
+        Returns:
+            np.ndarray: Ready input tensor [1, 3, 640, 640]
+        """
         img = cv2.resize(img_bgr, (640, 640))
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = img.astype(np.float32) / 255.0
@@ -73,9 +107,24 @@ class AppleInference:
             return 0  # red_apple
 
     def run_inference(self, image_bytes: bytes):
-        """Excecute Detection , then it returns the apple number \counting/"""
+        """Excecute Detection , then it returns the apple number \counting/
+            Run full detection pipeline on image bytes.
+
+            Returns counts and detection details for visualization and yield estimation.
+
+            Args:
+                image_bytes: Raw image data (e.g. from FastAPI UploadFile)
+
+            Returns:
+                dict: { ...}
+
+        """
+        # Decode Input bytes to OpenCV format
         nparr = np.frombuffer(image_bytes, np.uint8)
         img_original = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img_original is None:
+            raise ValueError("Failed to decode input image")
         
         # 1. Get Original Dimensions
         orig_h, orig_w = img_original.shape[:2]
@@ -86,9 +135,10 @@ class AppleInference:
         
         # 3. Run the Model. 
         outputs = self.session.run(None, {self.input_name: input_tensor})
-        predictions = np.squeeze(outputs[0]).T
+        predictions = np.squeeze(outputs[0]).T  # CAREFULL [num_detections, 6] (x_center, y_center, w, h, conf_class0, conf_class1) 
+        ## Shape: (num_dets, 4 + num_classes)
         
-        # 4. Split boxes , its scores 
+        # 4. Split boxes (cx,cy,w,h) and scores (conf_class0, conf_class1)
         boxes = predictions[:, :4]
         scores = predictions[:, 4:]
         
@@ -107,7 +157,7 @@ class AppleInference:
         
         print(f"Detection before pulling NMS: {len(filtered_boxes)}")
         
-        # 6. Convert into  NMS  suitable format
+        # 6. Convert into  NMS  suitable format ::(convert cxcywh → xywh)
         nms_boxes = []
         
         for box in filtered_boxes:
@@ -121,7 +171,7 @@ class AppleInference:
             nms_boxes, 
             filtered_confidences.tolist(), 
             conf_threshold, 
-            0.45
+            0.45  # NMS  IoU  Threshold
         )
         
         print(f"Detection after NMS: {len(indexes) if len(indexes) > 0 else 0}")
@@ -150,13 +200,13 @@ class AppleInference:
                 # get boxes in 640px
                 x_640, y_640, w_640, h_640 = nms_boxes[i]
                 
-                # Back to Original size
+                # Back to Original size (640x640) - Scaled Boxes
                 x_real = int(x_640 * x_scale)
                 y_real = int(y_640 * y_scale)
                 w_real = int(w_640 * x_scale)
                 h_real = int(h_640 * y_scale)
                 
-                # Ajustar bounds para evitar out-of-range
+                # Clamp to Images bounds (avoid out-of-range)
                 x_real = max(0, x_real)
                 y_real = max(0, y_real)
                 w_real = min(w_real, orig_w - x_real)
@@ -165,15 +215,15 @@ class AppleInference:
                 if w_real <= 0 or h_real <= 0:
                     continue
                 
-                # Post-procesamiento de color SOLO para class_id==0 ("apple")
+                # Color classification only for healthy apples (class 0))
                 label_id = orig_label_id
                 if label_id == 0:
-                    # Extraer ROI
+                    # Extract ROI (Region of Interest)
                     roi = img_original[y_real:y_real + h_real, x_real:x_real + w_real]
                     if roi.size == 0:
-                        continue  # ROI vacío
+                        continue  # Empty ROI, skip color classification    
                     
-                    # Clasificar color
+                    # Temporaly Disable Clasificar color
                     #color_class = self._classify_apple_color(roi)
                     #label_id = color_class  # 0=red, 2=green
                 

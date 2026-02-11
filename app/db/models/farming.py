@@ -5,10 +5,12 @@ from datetime import datetime, timedelta, timezone
 
 
 def get_bogota_time():
+    """Return current time in Bogotá timezone (UTC-5)."""
     return datetime.now(timezone(timedelta(hours=-5)))
 
 
 class YieldRecord(Base):
+    """Historical yield estimation record (aggregated per image/upload)."""
     __tablename__ = "yield_records"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -25,6 +27,7 @@ class YieldRecord(Base):
 
 
 class Orchard(Base):
+    """Orchard / Farm plantation managed by a user."""
     __tablename__ = "orchards"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -40,7 +43,9 @@ class Orchard(Base):
         return f"<Orchard(id={self.id}, name='{self.name}', location='{self.location}', n_trees={self.n_trees})>"
 
 class Tree(Base):
+    """Individual tree within an orchard."""
     __tablename__ = "trees"
+    
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     orchard_id = Column(Integer, ForeignKey("orchards.id"))
@@ -54,7 +59,9 @@ class Tree(Base):
         return f"<Tree(id={self.id}, tree_code='{self.tree_code}')>"
     
 class Image(Base):
+    """Uploaded image for apple detection (linked to tree/orchard/user)."""
     __tablename__ = "images"
+    
     id = Column(Integer, primary_key=True, index=True)
     # Trazabilidad total solicitada
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -73,7 +80,9 @@ class Image(Base):
     
 
 class Prediction(Base):
+    """Model inference result summary for one image."""
     __tablename__ = "predictions"
+    
     id = Column(Integer, primary_key=True, index=True)
     image_id = Column(Integer, ForeignKey("images.id"))
     model_version = Column(String)
@@ -91,7 +100,9 @@ class Prediction(Base):
     
 
 class Detection(Base):
+    """Individual apple detection (bounding box + class + confidence)."""
     __tablename__ = "detections"
+    
     id = Column(Integer, primary_key=True, index=True)
     prediction_id = Column(Integer, ForeignKey("predictions.id"))
     class_label = Column(String)

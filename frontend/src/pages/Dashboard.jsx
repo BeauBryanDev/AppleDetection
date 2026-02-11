@@ -1,8 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../components/ui/Card';
-import { Trees, Sprout, Activity, AlertTriangle, MapPin, Calendar, CheckCircle2, Search } from 'lucide-react';
+import { Trees, Sprout, Activity, AlertTriangle, MapPin, Calendar, CheckCircle2, Search, PieChart as PieChartIcon } from 'lucide-react';
 import { getOrchardsRequest } from '../api/farming';
 import { getDashboardAnalyticsRequest } from '../api/analytics';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip
+} from 'recharts';
+
+// Cyberpunk colors
+const COLORS = {
+  healthy: '#39ff14',
+  damaged: '#ff073a',
+  total: '#00d4ff'
+};
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -45,6 +59,45 @@ export default function DashboardPage() {
   // --- MAPEO DE DATOS (Backend JSON -> Frontend UI) ---
   const summary = analytics?.summary;
   const detections = analytics?.recent_detections || [];
+
+  // Calculate totals for pie chart
+  const totalHealthyApples = detections.reduce((sum, d) => sum + d.healthy_apples, 0);
+  const totalDamagedApples = detections.reduce((sum, d) => sum + d.damaged_apples, 0);
+
+  const appleDistribution = [
+    { name: 'Sanas', value: totalHealthyApples, color: COLORS.healthy },
+    { name: 'Dañadas', value: totalDamagedApples, color: COLORS.damaged }
+  ];
+
+  // Custom tooltip
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-black/90 border border-apple-green/30 rounded-lg p-3 shadow-xl">
+          <p className="text-white font-bold" style={{ color: payload[0].payload.color }}>
+            {payload[0].name}: {payload[0].value}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Progress bar component
+  const ProgressBar = ({ value, max, color }) => {
+    const percentage = (value / max) * 100;
+    return (
+      <div className="w-full bg-zinc-900 rounded-full h-2 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-1000 ${color}`}
+          style={{
+            width: `${Math.min(percentage, 100)}%`,
+            boxShadow: `0 0 8px ${color === 'bg-apple-green' ? '#39ff14' : '#ff073a'}`
+          }}
+        />
+      </div>
+    );
+  };
 
   const stats = summary ? [
     { 
@@ -124,8 +177,64 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* 3. Tabla de Detecciones Recientes */}
+      {/* 3. Charts and Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Apple Distribution Pie Chart */}
+        <div>
+          <Card className="p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black mb-6">
+            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <PieChartIcon className="w-5 h-5 text-apple-green" />
+              Distribución de Manzanas
+            </h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={appleDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                >
+                  {appleDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="text-center p-2 bg-apple-green/10 rounded-lg border border-apple-green/30">
+                <p className="text-xs text-zinc-400">Sanas</p>
+                <p className="text-xl font-bold text-apple-green">{totalHealthyApples}</p>
+              </div>
+              <div className="text-center p-2 bg-apple-red/10 rounded-lg border border-apple-red/30">
+                <p className="text-xs text-zinc-400">Dañadas</p>
+                <p className="text-xl font-bold text-apple-red">{totalDamagedApples}</p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Health Score with Progress */}
+          <Card className="bg-gradient-to-br from-zinc-900 to-black border-zinc-800 p-6">
+            <div className="mb-2 text-zinc-500 text-xs font-mono uppercase tracking-widest">Calidad Global</div>
+            <div className="text-5xl font-bold text-white mb-4">
+              {summary?.health_score_avg.toFixed(0)}%
+            </div>
+            <ProgressBar
+              value={summary?.health_score_avg || 0}
+              max={100}
+              color={summary?.health_score_avg >= 75 ? 'bg-apple-green' : 'bg-yellow-500'}
+            />
+            <div className="text-sm text-apple-green flex items-center justify-center gap-1 mt-4">
+              <CheckCircle2 className="w-4 h-4" /> {summary?.health_score_avg >= 75 ? 'Huerto Saludable' : 'Requiere Atención'}
+            </div>
+          </Card>
+        </div>
+
+        {/* Recent Activity Table */}
         <div className="lg:col-span-2">
             <Card className="p-0 overflow-hidden border-zinc-800 bg-cyber-dark">
                 <div className="p-4 border-b border-zinc-800 bg-black/20 flex justify-between items-center">
@@ -193,25 +302,6 @@ export default function DashboardPage() {
             </Card>
         </div>
 
-        {/* Panel Lateral: Resumen */}
-        <div className="space-y-6">
-            <Card className="bg-gradient-to-br from-zinc-900 to-black border-zinc-800 text-center py-8">
-                <div className="mb-2 text-zinc-500 text-xs font-mono uppercase tracking-widest">Calidad Global</div>
-                <div className="text-5xl font-bold text-white mb-2">
-                    {summary?.health_score_avg.toFixed(0)}%
-                </div>
-                <div className="text-sm text-apple-green flex items-center justify-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" /> Huerto Saludable
-                </div>
-            </Card>
-            
-            <Card className="border border-dashed border-zinc-800 bg-transparent flex flex-col items-center justify-center py-10 hover:border-zinc-600 transition-colors cursor-pointer group">
-                <div className="p-3 bg-zinc-900 rounded-full mb-3 group-hover:bg-apple-green group-hover:text-black transition-colors">
-                    <Calendar className="w-6 h-6 text-zinc-400 group-hover:text-black" />
-                </div>
-                <span className="text-sm text-zinc-500 group-hover:text-zinc-300">Agendar Inspección</span>
-            </Card>
-        </div>
       </div>
     </div>
   );

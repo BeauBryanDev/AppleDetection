@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 
-
 # Basic  Schema for common datos without logging first.
 class YieldBase(BaseModel):
+    
     filename: str = Field(..., example="tree_01.jpg")
     healthy_count: int = Field(..., ge=0, example=12)
     damaged_count: int = Field(..., ge=0, example=3)
@@ -14,10 +14,12 @@ class YieldBase(BaseModel):
 
 # Schema to create a new log into database
 class YieldCreate(YieldBase):
+    
     pass
 
 # Schema for user response API Output
 class YieldResponse(YieldBase):
+    
     id: int
     created_at: datetime
 
@@ -28,6 +30,7 @@ class YieldResponse(YieldBase):
 
 # Rightfull Schema for quick  Analyissi , critical for React Dashboard in frontEnd.
 class YieldAnalytics(BaseModel):
+    
     total_detected: int
     healthy_count: int
     damaged_count: int = 0
@@ -36,6 +39,7 @@ class YieldAnalytics(BaseModel):
     
     
 class DetectionBase(BaseModel):
+    
     class_label: str
     confidence: float
     x_min: int
@@ -44,6 +48,7 @@ class DetectionBase(BaseModel):
     y_max: int
 
 class PredictionResponse(BaseModel):
+    
     total_apples: int
     good_apples: int
     damaged_apples: int
@@ -51,4 +56,5 @@ class PredictionResponse(BaseModel):
     detections: List[DetectionBase]
 
     class Config:
+        
         orm_mode = True

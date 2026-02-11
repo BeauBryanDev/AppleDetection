@@ -15,23 +15,26 @@ import {
 } from 'lucide-react';
 import { uploadImageEstimateRequest } from '../api/estimator';
 import { getOrchardsRequest, getOrchardTreesRequest } from '../api/farming';
+import { useAuth } from '../context/AuthContext'; // Assuming useAuth is in this path
 
 export default function EstimatorPage() {
+  const { isGuest } = useAuth();
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-
   // Orchard & Tree selection
   const [orchards, setOrchards] = useState([]);
   const [trees, setTrees] = useState([]);
   const [selectedOrchard, setSelectedOrchard] = useState('');
   const [selectedTree, setSelectedTree] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadOrchards();
-  }, []);
+    if (!isGuest) {
+      loadOrchards();
+    }
+  }, [isGuest]);
 
   useEffect(() => {
     if (selectedOrchard) {
@@ -155,9 +158,16 @@ export default function EstimatorPage() {
             Estimador de Rendimiento
           </h1>
           <p className="text-zinc-500 text-sm font-mono">
-            Carga una imagen para detectar manzanas automáticamente
+            {isGuest
+              ? "Modo Invitado: Prueba la detección de manzanas sin límites"
+              : "Carga una imagen para detectar manzanas automáticamente"}
           </p>
         </div>
+        {isGuest && (
+          <div className="px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 text-xs font-mono animate-pulse">
+            MODO INVITADO ACTIVO
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -206,6 +216,7 @@ export default function EstimatorPage() {
                               accept="image/*"
                               className="sr-only"
                               onChange={handleFileChange}
+                              required
                             />
                           </label>
                           <p className="pl-1">o arrastra y suelta</p>
@@ -224,19 +235,26 @@ export default function EstimatorPage() {
                   id="orchard"
                   value={selectedOrchard}
                   onChange={(e) => setSelectedOrchard(e.target.value)}
-                  className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-apple-green/50"
+                  disabled={isGuest}
+                  className={`w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-apple-green/50 ${isGuest ? 'opacity-50 cursor-not-allowed italic text-zinc-500' : ''
+                    }`}
                 >
-                  <option value="">Sin asignar (Modo Invitado)</option>
-                  {orchards.map((orchard) => (
+                  <option value="">{isGuest ? "No disponible en modo invitado" : "Sin asignar (Registro rápido)"}</option>
+                  {!isGuest && orchards.map((orchard) => (
                     <option key={orchard.id} value={orchard.id}>
                       {orchard.name} - {orchard.location}
                     </option>
                   ))}
                 </select>
+                {isGuest && (
+                  <p className="mt-1 text-[10px] text-zinc-600 font-mono">
+                    * Inicia sesión para vincular detecciones a tus huertos
+                  </p>
+                )}
               </div>
 
               {/* Tree Selection */}
-              {selectedOrchard && trees.length > 0 && (
+              {(!isGuest && selectedOrchard && trees.length > 0) && (
                 <div>
                   <Label htmlFor="tree">Árbol (Opcional)</Label>
                   <select
@@ -245,10 +263,10 @@ export default function EstimatorPage() {
                     onChange={(e) => setSelectedTree(e.target.value)}
                     className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-apple-green/50"
                   >
-                    <option value="">Sin especificar</option>
+                    <option value="">Sin asignar (Huerto General)</option>
                     {trees.map((tree) => (
                       <option key={tree.id} value={tree.id}>
-                        {tree.tree_code} {tree.tree_type ? `- ${tree.tree_type}` : ''}
+                        #{tree.tree_code} ({tree.tree_type || 'N/A'})
                       </option>
                     ))}
                   </select>

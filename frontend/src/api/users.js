@@ -11,8 +11,10 @@ export const getUserByIdRequest = async (userId) => {
 };
 
 // Get all users (admin only)
-export const getUsersRequest = async () => {
-  return client.get('/users/');
+export const getUsersRequest = async (skip = 0, limit = 100) => {
+  return client.get('/users/', {
+    params: { skip, limit }
+  });
 };
 
 // Create new user (admin only)
