@@ -56,7 +56,11 @@ app.add_middleware(
         "X-Total-Count",
         "X-Health-Index",
         "X-Record-ID",
-        "X-Prediction-ID"
+        "X-Prediction-ID",
+        "X-Inference-Time-Ms",
+        "X-Mode",
+        "X-Orchard-ID",
+        "X-Tree-ID"
     ]
 )
 
@@ -103,7 +107,7 @@ async def startup_event():
 
 app.include_router(
     estimator.router, 
-    prefix="/api/v1", 
+    prefix="/api/v1/estimator", 
     tags=["Estimator"]
 )
 
@@ -115,7 +119,7 @@ app.include_router(
 
 app.include_router(
     history.router,
-    prefix="/api/v1", 
+    prefix="/api/v1/history", 
     tags=["History"]
 )
 

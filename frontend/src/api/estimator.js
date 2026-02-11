@@ -8,6 +8,7 @@ export const uploadImageEstimateRequest = async (formData, orchardId = null, tre
 
   return client.post('/estimator/estimate', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    params
+    params,
+    responseType: 'blob'  // Backend returns image, not JSON
   });
 };

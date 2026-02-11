@@ -99,7 +99,35 @@ export default function EstimatorPage() {
       const treeId = selectedTree ? parseInt(selectedTree) : null;
 
       const res = await uploadImageEstimateRequest(formData, orchardId, treeId);
-      setResult(res.data);
+
+      // Backend returns image with detection data in headers
+      const processedImageBlob = res.data;
+      const processedImageUrl = URL.createObjectURL(processedImageBlob);
+
+      // Debug: Log response headers
+      console.log('Response headers:', res.headers);
+
+      // Read detection results from response headers
+      const result = {
+        total_count: parseInt(res.headers['x-total-count'] || '0'),
+        healthy_count: parseInt(res.headers['x-healthy-count'] || '0'),
+        damaged_count: parseInt(res.headers['x-damaged-count'] || '0'),
+        health_index: parseFloat(res.headers['x-health-index'] || '0'),
+        id: res.headers['x-record-id'] || null,
+        filename: selectedFile.name,
+        created_at: new Date().toISOString(),
+        processed_image_url: processedImageUrl
+      };
+
+      console.log('Parsed result:', result);
+
+      setResult(result);
+
+      // Update preview to show the processed image with bounding boxes
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl(processedImageUrl);
     } catch (err) {
       console.error('Error processing image:', err);
       setError(err.response?.data?.detail || 'Error al procesar la imagen');
@@ -317,26 +345,24 @@ export default function EstimatorPage() {
                     Índice de Salud
                   </h3>
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-bold ${
-                      (result.health_index || 0) >= 80
-                        ? 'bg-apple-green/10 text-apple-green'
-                        : (result.health_index || 0) >= 50
+                    className={`px-3 py-1 rounded-full text-sm font-bold ${(result.health_index || 0) >= 80
+                      ? 'bg-apple-green/10 text-apple-green'
+                      : (result.health_index || 0) >= 50
                         ? 'bg-yellow-500/10 text-yellow-500'
                         : 'bg-red-500/10 text-red-500'
-                    }`}
+                      }`}
                   >
                     {(result.health_index || 0).toFixed(1)}%
                   </span>
                 </div>
                 <div className="bg-zinc-900 rounded-full h-4 overflow-hidden">
                   <div
-                    className={`h-full transition-all ${
-                      (result.health_index || 0) >= 80
-                        ? 'bg-apple-green'
-                        : (result.health_index || 0) >= 50
+                    className={`h-full transition-all ${(result.health_index || 0) >= 80
+                      ? 'bg-apple-green'
+                      : (result.health_index || 0) >= 50
                         ? 'bg-yellow-500'
                         : 'bg-red-500'
-                    }`}
+                      }`}
                     style={{ width: `${result.health_index || 0}%` }}
                   />
                 </div>

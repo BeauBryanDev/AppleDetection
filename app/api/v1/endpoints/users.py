@@ -79,6 +79,22 @@ async def register_new_user(
     db.refresh(new_user)
     return new_user
 
+# 2. Get All Users (Admin Only)
+@router.get("/", response_model=List[user_schema.UserResponse])
+async def read_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_admin: models.User = Depends(deps.get_current_active_admin)
+):
+    """
+    Retrieve users.
+    Only for admins.
+    """
+    users = db.query(models.User).offset(skip).limit(limit).all()
+    return users
+
+
 # Create a new User, it is protected , oly for admin can create new admin users.
 @router.post("/", response_model=user_schema.UserResponse)
 async def create_user_for_admins(

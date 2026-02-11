@@ -6,7 +6,8 @@ import {
   Trees,
   BarChart3,
   Shield,
-  Sprout
+  Sprout,
+  User
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../../context/AuthContext';
@@ -20,8 +21,9 @@ export function Sidebar() {
     { icon: Trees, label: 'Mis Huertos', path: '/farming' },
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: History, label: 'Historial', path: '/history' },
+    { icon: User, label: 'Mi Perfil', path: '/profile' },
     // Admin-only item
-    ...(user?.role === 'ADMIN' ? [{ icon: Shield, label: 'Usuarios', path: '/users' }] : []),
+    ...(user?.role === 'admin' ? [{ icon: Shield, label: 'Usuarios', path: '/users' }] : []),
   ];
 
   return (
@@ -42,8 +44,8 @@ export function Sidebar() {
             to={item.path}
             className={({ isActive }) => clsx(
               "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group",
-              isActive 
-                ? "bg-apple-green/10 text-apple-green border border-apple-green/20 shadow-neon-green" 
+              isActive
+                ? "bg-apple-green/10 text-apple-green border border-apple-green/20 shadow-neon-green"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             )}
           >

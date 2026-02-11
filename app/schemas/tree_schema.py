@@ -3,13 +3,12 @@ from typing import Optional
 
 # Shared properties
 class TreeBase(BaseModel):
-    orchard_id: int
     tree_code: str
     tree_type: Optional[str] = None
 
 # Properties to receive on creation
 class TreeCreate(TreeBase):
-    user_id: int
+    pass
 
 # Properties to receive on update
 class TreeUpdate(BaseModel):
@@ -19,6 +18,7 @@ class TreeUpdate(BaseModel):
 # Properties returned to client
 class Tree(TreeBase):
     id: int
+    orchard_id: int
     user_id: int
 
     class Config:

@@ -8,13 +8,12 @@ class OrchardBase(BaseModel):
     name: str
     location: Optional[str] = None
     n_trees: int    
-    user_id: int
 
-# Schema to create a new Orchard with User register
+# Schema to create a new Orchard
 class Create(OrchardBase):
-    user_id: int
+    pass
 
-# General Orchard Schema 
+# General Orchard Schema (Response)
 class Orchard(OrchardBase):
     id: int
     user_id: int

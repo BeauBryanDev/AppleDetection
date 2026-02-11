@@ -24,9 +24,9 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-cyber-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-cyber-black to-cyber-black p-4">
-      
+
       <Card className="w-full max-w-md border-t-4 border-t-apple-green shadow-2xl relative overflow-hidden">
-        
+
         {/* Efecto decorativo de fondo */}
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-apple-green/10 rounded-full blur-2xl"></div>
 
@@ -76,11 +76,11 @@ function LoginPage() {
         <p className="mt-8 text-center text-sm text-zinc-500">
           ¿No tienes cuenta?{" "}
           <Link to="/register" className="text-apple-green hover:underline font-bold">
-            Registrar Finca
+            Registrate
           </Link>
         </p>
       </Card>
-      
+
       {/* Footer minimalista */}
       <div className="absolute bottom-4 text-zinc-700 text-xs font-mono">
         SYSTEM STATUS: <span className="text-apple-green">ONLINE</span>

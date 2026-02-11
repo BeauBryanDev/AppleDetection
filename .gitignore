@@ -218,7 +218,7 @@ apples/
 notes.txt
 app/models/weights/*.onnx
 
-CLAUDE.MD 
+CLAUDE.md 
 
 #Ignore my notes
 .vscode/settings.json

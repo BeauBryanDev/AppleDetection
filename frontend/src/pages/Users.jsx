@@ -16,7 +16,7 @@ import {
   Save,
   AlertCircle
 } from 'lucide-react';
-import { getMeRequest, createUserRequest, updateUserRequest, deleteUserRequest } from '../api/users';
+import { getMeRequest, createUserRequest, updateUserRequest, deleteUserRequest, getUsersRequest } from '../api/users';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -32,7 +32,7 @@ export default function UsersPage() {
     email: '',
     phone_number: '',
     password: '',
-    role: 'FARMER'
+    role: 'farmer'
   });
 
   useEffect(() => {
@@ -46,8 +46,10 @@ export default function UsersPage() {
       setCurrentUser(res.data);
 
       // Solo los admin pueden ver esta página
-      if (res.data.role !== 'ADMIN') {
+      if (res.data.role !== 'admin') {
         setError('No tienes permisos para acceder a esta página');
+      } else {
+        loadUsers();
       }
     } catch (err) {
       console.error('Error loading current user:', err);
@@ -57,14 +59,23 @@ export default function UsersPage() {
     }
   };
 
+  const loadUsers = async () => {
+    try {
+      const res = await getUsersRequest();
+      setUsers(res.data);
+    } catch (err) {
+      console.error('Error loading users:', err);
+    }
+  };
+
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
       await createUserRequest(userForm);
       setShowModal(false);
-      setUserForm({ name: '', email: '', phone_number: '', password: '', role: 'FARMER' });
+      setUserForm({ name: '', email: '', phone_number: '', password: '', role: 'farmer' });
       alert('Usuario creado exitosamente');
-      // Note: Real implementation would need an endpoint to get all users
+      loadUsers();
     } catch (err) {
       console.error('Error creating user:', err);
       alert('Error al crear usuario');
@@ -85,8 +96,9 @@ export default function UsersPage() {
       await updateUserRequest(editingUser.id, updateData);
       setShowModal(false);
       setEditingUser(null);
-      setUserForm({ name: '', email: '', phone_number: '', password: '', role: 'FARMER' });
+      setUserForm({ name: '', email: '', phone_number: '', password: '', role: 'farmer' });
       alert('Usuario actualizado exitosamente');
+      loadUsers();
     } catch (err) {
       console.error('Error updating user:', err);
       alert('Error al actualizar usuario');
@@ -98,6 +110,7 @@ export default function UsersPage() {
     try {
       await deleteUserRequest(userId);
       alert('Usuario eliminado exitosamente');
+      loadUsers();
     } catch (err) {
       console.error('Error deleting user:', err);
       alert('Error al eliminar usuario');
@@ -106,7 +119,7 @@ export default function UsersPage() {
 
   const openCreateModal = () => {
     setEditingUser(null);
-    setUserForm({ name: '', email: '', phone_number: '', password: '', role: 'FARMER' });
+    setUserForm({ name: '', email: '', phone_number: '', password: '', role: 'farmer' });
     setShowModal(true);
   };
 
@@ -131,7 +144,7 @@ export default function UsersPage() {
     );
   }
 
-  if (error && currentUser?.role !== 'ADMIN') {
+  if (error && currentUser?.role !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Shield className="w-16 h-16 text-apple-red mb-4" />
@@ -176,25 +189,62 @@ export default function UsersPage() {
         </div>
       </Card>
 
-      {/* Users List (Mock - would need backend endpoint) */}
+      {/* Users List */}
       <Card className="p-4 border-zinc-800 bg-cyber-dark">
         <h3 className="text-white font-bold mb-4 flex items-center gap-2">
           <UsersIcon className="w-5 h-5 text-apple-green" />
-          Lista de Usuarios del Sistema
+          Lista de Usuarios ({users.length})
         </h3>
 
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4 flex items-start gap-2">
-          <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-yellow-500">
-            <p className="font-bold mb-1">Nota de Implementación</p>
-            <p>El backend no tiene un endpoint para listar todos los usuarios. Necesitarás agregar un endpoint GET /api/v1/users/ en el backend para mostrar la lista completa.</p>
-          </div>
-        </div>
-
-        <div className="text-center py-12 text-zinc-500">
-          <UsersIcon className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-          <p>Endpoint de listado de usuarios no disponible</p>
-          <p className="text-sm mt-2">Puedes crear, editar y eliminar usuarios usando los botones correspondientes</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left text-zinc-400">
+            <thead className="text-xs text-zinc-500 uppercase bg-zinc-900/50">
+              <tr>
+                <th className="px-4 py-3">Usuario</th>
+                <th className="px-4 py-3">Rol</th>
+                <th className="px-4 py-3">Contacto</th>
+                <th className="px-4 py-3 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id} className="border-b border-zinc-800 hover:bg-zinc-800/30">
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-white">{user.name}</div>
+                    <div className="text-xs text-zinc-500">{user.email}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium border ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-500 border-purple-500/30' :
+                      user.role === 'farmer' ? 'bg-apple-green/10 text-apple-green border-apple-green/30' :
+                        'bg-zinc-700/30 text-zinc-400 border-zinc-600'
+                      }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.phone_number || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => openEditModal(user)} className="p-1 hover:text-apple-green transition-colors">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDeleteUser(user.id)} className="p-1 hover:text-apple-red transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="text-center py-8 text-zinc-500">
+                    No hay usuarios registrados
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </Card>
 
@@ -286,9 +336,9 @@ export default function UsersPage() {
                     onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
                     className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-apple-green/50"
                   >
-                    <option value="FARMER">FARMER (Agricultor)</option>
-                    <option value="ADMIN">ADMIN (Administrador)</option>
-                    <option value="GUEST">GUEST (Invitado)</option>
+                    <option value="farmer">FARMER (Agricultor)</option>
+                    <option value="admin">ADMIN (Administrador)</option>
+                    <option value="guest">GUEST (Invitado)</option>
                   </select>
                 </div>
               )}
