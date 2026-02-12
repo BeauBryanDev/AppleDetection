@@ -19,6 +19,10 @@ async def read_user_me(
     Get the current user profile 
     Show User information
     """
+    
+    logger.debug(f"Login attempt for {current_user.email}")
+    logger.info("User logged in", user_id=current_user.id)
+    
     return current_user
 
 # --- PROTECTED DATA    ---

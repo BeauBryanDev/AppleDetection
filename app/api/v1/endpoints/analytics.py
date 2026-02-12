@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, logger, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from app.core.config import settings
+from app.core.logging import logger
 from app.db.session import get_db
 from app.db.models import farming as models
 from app.db.models.users import User, UserRole
@@ -10,9 +12,6 @@ from app.api import deps
 
 router = APIRouter()
 
-# ============================================
-# ENDPOINTS ADICIONALES (OPCIONAL)
-# ============================================
 
 def validate_orchard_access(
     orchard_id: int,
@@ -20,20 +19,20 @@ def validate_orchard_access(
     db: Session
 ) -> models.Orchard:
     """
-    Valida que el usuario tiene acceso al orchard.
-    
-    Args:
-        orchard_id: ID del orchard
-        current_user: Usuario autenticado
-        db: Sesión de base de datos
-        
-    Returns:
-        Orchard: El orchard validado
-        
-    Raises:
-        HTTPException 404: Si el orchard no existe
-        HTTPException 403: Si el usuario no tiene permisos
-    """
+        Validate user has access to the orchard.
+
+        Args:
+            orchard_id: Orchard ID
+            current_user: Authenticated user
+            db: Database session
+
+        Returns:
+            Orchard: Validated orchard
+
+        Raises:
+            HTTPException 404: If orchard not found
+            HTTPException 403: If user lacks permission
+        """
     orchard = db.query(models.Orchard).filter(
         models.Orchard.id == orchard_id
     ).first()
@@ -44,11 +43,11 @@ def validate_orchard_access(
             detail=f"Orchard {orchard_id} not found"
         )
     
-    # Si es ADMIN, puede acceder a cualquier orchard
+    # Admins can access any orchard
     if current_user.role == UserRole.ADMIN:
         return orchard
     
-    # Si no es ADMIN, debe ser el dueño
+    # Non-admins must own it
     if orchard.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -65,32 +64,33 @@ async def get_orchard_dashboard(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Obtiene el dashboard completo de un orchard con métricas y actividad reciente.
-    
-    SEGURIDAD:
-    - Solo el dueño del orchard (o ADMIN) puede ver sus métricas
-    
-    Métricas incluidas:
-    - Número de árboles
-    - Imágenes procesadas
-    - Total de manzanas detectadas
-    - Promedio de índice de salud
-    - Últimas 5 detecciones
-    
+    Get a full dashboard for an orchard with metrics and recent activity.
+
+    Security:
+    - Only owner or ADMIN can view
+
+    Metrics:
+    - Number of trees
+    - Processed images
+    - Total detected apples
+    - Average health index
+    - Last 5 detections
+
     Args:
-        orchard_id: ID del orchard
-        
+        orchard_id: Orchard ID
+
     Returns:
-        dict: Dashboard con métricas y detecciones recientes
-        
+        dict: Dashboard with metrics and recent detections
+
     Raises:
-        404: Si el orchard no existe
-        403: Si el usuario no tiene permisos
+        404: If orchard not found
+        403: If user lacks permission
     """
-    #  Validar que el usuario tiene acceso al orchard
+   
+    # Validate user has access to the orchard
     orchard = validate_orchard_access(orchard_id, current_user, db)
     
-    # Calcular métricas globales del huerto
+    ## Aggregate metrics for the orchard
     stats = db.query(
         func.count(models.Prediction.id).label("total_images"),
         func.sum(models.Prediction.total_apples).label("sum_apples"),
@@ -99,14 +99,16 @@ async def get_orchard_dashboard(
         models.Tree.orchard_id == orchard_id
     ).first()
 
-    # Obtener los últimos 5 registros para una tabla rápida
+    # Recent detections (last 10 predictions)
     recent_activity = db.query(models.Prediction)\
         .join(models.Image)\
         .join(models.Tree)\
         .filter(models.Tree.orchard_id == orchard_id)\
         .order_by(models.Prediction.id.desc())\
-        .limit(5)\
+        .limit(10)\
         .all()
+
+    logger.debug(f"Fetched dashboard for orchard {orchard_id} by user {current_user.id}")
 
     return {
         "orchard_id": orchard.id,
@@ -131,7 +133,7 @@ async def get_orchard_dashboard(
                 "orchard_name": p.image.orchard.name,
                 "tree_id": p.image.tree_id,
                 "tree_code": p.image.tree.tree_code,
-                "timestamp": p.image.uploaded_at
+                "updated_at": p.image.uploaded_at.isoformat()
             } for p in recent_activity
         ]
     }
@@ -143,21 +145,7 @@ async def get_trees_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
-    """
-    Obtiene un resumen de métricas por árbol dentro de un orchard.
-    
-    Útil para identificar qué árboles tienen mejor/peor salud.
-    
-    Args:
-        orchard_id: ID del orchard
-        
-    Returns:
-        dict: Resumen de métricas por árbol
-        
-    Raises:
-        404: Si el orchard no existe
-        403: Si el usuario no tiene permisos
-    """
+
     # Validar acceso
     orchard = validate_orchard_access(orchard_id, current_user, db)
     
@@ -197,13 +185,12 @@ async def get_user_summary(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Obtiene un resumen global de todos los orchards del usuario.
-    
-    FARMER: Ve solo sus orchards
-    ADMIN: Ve todos los orchards del sistema
-    
+    Get a global summary across all user's orchards.
+
+    Admin-only sees system-wide; others see their own.
+
     Returns:
-        dict: Resumen global de orchards y métricas
+        dict: Global metrics and per-orchard summaries
     """
     # Determinar qué orchards puede ver
     if current_user.role == UserRole.ADMIN:
@@ -276,16 +263,16 @@ async def get_health_trend(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Obtiene la tendencia del índice de salud del orchard en el tiempo.
-    
-    Útil para gráficos de línea mostrando evolución.
-    
+    Get the health index trend for an orchard over time.
+
+    Useful for line charts showing evolution.
+
     Args:
-        orchard_id: ID del orchard
-        limit: Número de registros a retornar (default: 30)
-        
+        orchard_id: Orchard ID
+        limit: Number of records to return (default: 30)
+
     Returns:
-        dict: Serie temporal del health index
+        dict: Time series of health index
     """
     # Validar acceso
     orchard = validate_orchard_access(orchard_id, current_user, db)

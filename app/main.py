@@ -5,12 +5,15 @@ import os
 from app.api.v1.endpoints import estimator, history, analytics, users, farming, auth
 from app.db.session import engine, Base
 from app.core.config import settings
+from app.db.base import Base  # Import Base to register models
 from app.db import models  # Import models package to register all models
 from app.core.logging import configure_logging, RequestContextMiddleware
 import uvicorn
 import logging
 
 logger = logging.getLogger(__name__)
+
+from app.core.logging import logger  # Import the configured logger
 
 # Try to create tables, but don't fail if DB is unavailable
 try:
@@ -29,8 +32,9 @@ app = FastAPI(
     title=settings.APP_NAME,
     description=settings.APP_DESCRIPTION,
     version=settings.APP_VERSION,
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url="/docs" if settings.DEBUG else "/redoc",
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
 )
 origins = [
     "http://localhost:3000",
@@ -73,41 +77,51 @@ if not os.path.exists("uploads"):
     
 # Serve static files (uploads directory)
 
-app.mount("/outputs", StaticFiles(directory="uploads"), name="outputs")
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+app.mount("/outputs", StaticFiles(directory=UPLOAD_DIR), name="outputs")
     
 # Include routers
+api_prefix = "/api/v1"
 
 
 @app.get("/", tags=["Health"])
 async def root():
+    """Basic welcome endpoint."""
     return {
-        "message": "Yield Estimator API is running",
-        "docs"   : "/docs",    
-        "status"  : "healthy"   ,
-        "version" : "1.0.0"
-            }
+        "message": f"Welcome to {settings.APP_NAME}",
+        "status": "healthy",
+        "version": settings.APP_VERSION,
+        "docs": "/docs" if settings.DEBUG else "disabled in production"
+    }
 
 
-# Health check endpoint
 @app.get("/health", tags=["Health"])
 async def health_check():
+    """Health check endpoint for load balancers / monitoring."""
     return {
         "status": "healthy",
-        "service": "yield_estimator"
-            }
+        "service": "yield-estimator-api",
+        "version": settings.APP_VERSION
+    }
 
 
 @app.on_event("startup")
 async def startup_event():
-    """
-    Tareas a ejecutar al iniciar la aplicación.
-    """
-    print("Iniciando Apple Yield Estimator API...")
-    print("Cargando modelo ONNX...")
-    print("API lista para recibir requests")
+    """Tasks to run when the application starts."""
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created/verified successfully")
+    except Exception as e:
+        logger.warning(f"Could not create/verify database tables on startup: {e}")
+
     configure_logging()
     logger.info(
-        f"Application startup complete - Version: {settings.APP_VERSION}, Debug: {settings.DEBUG}"
+        "Application startup complete",
+        version=settings.APP_VERSION,
+        debug_mode=settings.DEBUG,
+        environment="development" if settings.DEBUG else "production"
     )
 
 app.add_middleware(RequestContextMiddleware)
@@ -152,20 +166,23 @@ app.include_router(
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """
-    Tareas a ejecutar al apagar la aplicación.
-    """
+    """Tasks to run when the application shuts down."""
     print("[X] Cerrando Apple Yield Estimator API...")
+    logger.info("Application shutdown initiated")
+    
 
 
 #app.include_router(history.router, prefix="/api/history", tags=["history"])
 
 app.add_middleware(RequestContextMiddleware)
 
+
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(
-        
-        "app.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info"
-        
-        )
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.DEBUG,
+        log_level="debug" if settings.DEBUG else "info",
+        workers=1,  # Increase in production if needed
+    )

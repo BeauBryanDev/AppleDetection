@@ -37,8 +37,6 @@ def add_exc_info(logger: Any, method_name: str, event_dict: Dict) -> Dict:
     return event_dict
 
 
-
-
 # ── Context Variables (for request/user correlation) ──────/---------
 
 request_id_var: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
@@ -116,8 +114,8 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
         request_id_var.set(request_id)
 
-        # Optional: set user_id if authenticated
-        # (you can inject this later from deps.get_current_user)
+        # Optional: set user_id if authenticated    
+        
         user_id_var.set(None)  # Will be set in deps if authenticated
 
         response = await call_next(request)

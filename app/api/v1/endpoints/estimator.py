@@ -13,7 +13,7 @@ from app.utils.image_processing import draw_cyberpunk_detections
 from app.schemas import yield_schema
 from app.api import deps
 from fastapi.responses import Response
-
+from app.core.logging import logger
 
 router = APIRouter()
 
@@ -103,6 +103,7 @@ def validate_image_file(file: UploadFile):
         )
 
 # MAIN ENDPOINT FOR ESTIMATOR.
+start_time = time.perf_counter()
 
 @router.post("/estimate")
 async def create_yield_estimate(
@@ -203,8 +204,6 @@ async def create_yield_estimate(
         health_idx = round((healthy / total * 100) if total > 0 else 0.0, 2)
         inference_time = round((time.time() - start_time) * 1000, 2)
         
-  
-        #   Save to DB (GUEST vs AUTHENTICATED)
         
         #   Generate unique filename for storage and record
         unique_filename = f"{uuid.uuid4()}_{file.filename}"
@@ -296,6 +295,12 @@ async def create_yield_estimate(
         # ============================================
         # 7. RETORNAR RESPUESTA
         # ============================================
+        
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        ms = (end_time - start_time) / 1000
+        logger.warning("Model inference slow", inference_time_ms=ms)
+        #logger.warning("Model inference slow", extra={"inference_time_ms": ms})
         
         return Response(
             content=processed_image,

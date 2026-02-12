@@ -6,6 +6,7 @@ from app.api import deps
 from app.db.models.users import User, UserRole
 from app.schemas import yield_schema
 from typing import List
+from app.core.logging import logger
 
 router = APIRouter()
 
@@ -17,9 +18,9 @@ async def get_all_estimates(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Endpoint para obtener todas las estimaciones con paginación.
-    FARMER: Solo ve sus propios registros.
-    ADMIN: Ve todos los registros del sistema.
+    Get all estimation records with pagination.
+
+    Farmers see only their own; admins see all.
     """
     query = db.query(models.YieldRecord)
     
@@ -41,8 +42,9 @@ async def get_yield_estimate(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Obtener datos de una estimación previa por ID.
-    Valida que el registro pertenezca al usuario o sea admin.
+    Get a specific estimation record by ID.
+
+    Validates ownership (unless admin).
     """
     record = db.query(models.YieldRecord).filter(
         models.YieldRecord.id == record_id
@@ -70,8 +72,9 @@ async def delete_estimate(
     current_user: User = Depends(deps.get_current_user)
 ):
     """
-    Endpoint para eliminar una estimación por su ID.
-    Valida que el registro pertenezca al usuario o sea admin.
+    Delete an estimation record by ID.
+
+    Validates ownership (unless admin).
     """
     record = db.query(models.YieldRecord).filter(
         models.YieldRecord.id == record_id
@@ -89,6 +92,8 @@ async def delete_estimate(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para eliminar este registro"
         )
+    
+    logger.info(f"Deleted record {record_id} by user {current_user.id}") 
     
     db.delete(record)
     db.commit()
