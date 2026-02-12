@@ -255,3 +255,23 @@ yarn.lock
 
 # Ignore all .backup 
 *.backup
+
+# Alembic migrations 
+alembic/versions/*
+!alembic/versions/README  # opcional, si quieres dejar un README vacío
+
+# Archivos de estado y temporales de Alembic
+alembic/env.pyc
+alembic/__pycache__/
+alembic/*.pyc
+
+# Archivo de configuración local 
+alembic.ini
+
+.mypy_cache
+.pytest_cache
+*.pyc
+__pycache__
+
+# Ignore all .backup 
+*.backup
