@@ -20,10 +20,8 @@ export const createOrchardRequest = async (orchardData) => {
 };
 
 // Update orchard
-export const updateOrchardRequest = async (orchardId, nTrees) => {
-  return client.patch(`/farming/orchards/${orchardId}`, null, {
-    params: { n_trees: nTrees }
-  });
+export const updateOrchardRequest = async (orchardId, orchardData) => {
+  return client.put(`/farming/orchards/${orchardId}`, orchardData);
 };
 
 // Delete orchard
@@ -47,22 +45,30 @@ export const getMyOrchardsRequest = async () => {
 
 // Get all trees from an orchard
 export const getOrchardTreesRequest = async (orchardId) => {
-  return client.get(`/farming/orchard/${orchardId}/trees`);
+  return client.get('/farming/trees', {
+    params: { orchard_id: orchardId }
+  });
 };
 
 // Create new tree
 export const createTreeRequest = async (orchardId, treeData) => {
-  return client.post(`/farming/orchard/${orchardId}/create_tree`, treeData);
+  return client.post('/farming/trees', treeData, {
+    params: { orchard_id: orchardId }
+  });
 };
 
 // Update tree
 export const updateTreeRequest = async (orchardId, treeId, treeData) => {
-  return client.put(`/farming/orchard/${orchardId}/tree/${treeId}`, treeData);
+  return client.put(`/farming/trees/${treeId}`, treeData, {
+    params: { orchard_id: orchardId }
+  });
 };
 
 // Delete tree
 export const deleteTreeRequest = async (orchardId, treeId) => {
-  return client.delete(`/farming/trees/${orchardId}/${treeId}`);
+  return client.delete(`/farming/trees/${treeId}`, {
+    params: { orchard_id: orchardId }
+  });
 };
 
 // ============================================

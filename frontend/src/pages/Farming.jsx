@@ -93,7 +93,7 @@ export default function FarmingPage() {
   const handleUpdateOrchard = async (e) => {
     e.preventDefault();
     try {
-      await updateOrchardRequest(editingOrchard.id, orchardForm.n_trees);
+      await updateOrchardRequest(editingOrchard.id, orchardForm);
       setShowOrchardModal(false);
       setEditingOrchard(null);
       setOrchardForm({ name: '', location: '', n_trees: 0 });

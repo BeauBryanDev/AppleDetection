@@ -21,6 +21,7 @@ export default function EstimatorPage() {
   const { isGuest } = useAuth();
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   // Orchard & Tree selection
   const [orchards, setOrchards] = useState([]);
   const [trees, setTrees] = useState([]);
@@ -63,23 +64,56 @@ export default function EstimatorPage() {
     }
   };
 
+  const validateAndSetFile = (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Por favor selecciona un archivo de imagen válido');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError('El archivo no debe superar 10MB');
+      return;
+    }
+
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setError(null);
+    setResult(null);
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        setError('Por favor selecciona un archivo de imagen válido');
-        return;
-      }
+    validateAndSetFile(file);
+  };
 
-      if (file.size > 10 * 1024 * 1024) {
-        setError('El archivo no debe superar 10MB');
-        return;
-      }
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
 
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setError(null);
-      setResult(null);
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      validateAndSetFile(files[0]);
     }
   };
 
@@ -183,7 +217,17 @@ export default function EstimatorPage() {
               {/* File Input */}
               <div>
                 <Label htmlFor="file-upload">Seleccionar Imagen</Label>
-                <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-zinc-800 border-dashed rounded-lg hover:border-zinc-700 transition-colors">
+                <div
+                  className={`mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg transition-colors ${
+                    isDragging
+                      ? 'border-apple-green bg-apple-green/5'
+                      : 'border-zinc-800 hover:border-zinc-700'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
                   <div className="space-y-1 text-center">
                     {previewUrl ? (
                       <div className="relative">
