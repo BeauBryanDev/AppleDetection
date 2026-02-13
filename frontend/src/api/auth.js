@@ -1,10 +1,11 @@
 import client from './axios';
 
 export const loginRequest = async (email, password) => {
-  //  OAuth2 requiere que los datos se envíen como application/x-www-form-urlencoded
+  //  OAuth2 data to be sent as :: application/x-www-form-urlencoded
   
   const params = new URLSearchParams();
-  params.append('username', email); // OAuth2 SIEMPRE exige que el campo se llame 'username'
+  params.append('username', email); //  username is the email
+
   params.append('password', password);
 
   return client.post('/auth/login', params, {

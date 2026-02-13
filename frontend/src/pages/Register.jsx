@@ -63,9 +63,9 @@ function RegisterPage() {
                 <CheckCircle className="w-12 h-12 text-apple-green" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">¡Registro Exitoso!</h2>
-            <p className="text-zinc-400 mb-4">Tu cuenta ha sido creada correctamente</p>
-            <p className="text-sm text-zinc-500 font-mono">Redirigiendo al login...</p>
+            <h2 className="text-2xl font-bold text-white mb-2"> Account created successfully </h2>
+            <p className="text-zinc-400 mb-4">Your account has been created successfully</p>
+            <p className="text-sm text-zinc-500 font-mono">Redirecting to login...</p>
           </div>
         </Card>
       </div>
@@ -87,9 +87,9 @@ function RegisterPage() {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">
-            Registro de <span className="text-apple-green">Finca</span>
+            Create a New  <span className="text-apple-green">Farm </span>
           </h1>
-          <p className="text-zinc-500 mt-2 text-sm font-mono">CREAR CUENTA DE AGRICULTOR</p>
+          <p className="text-zinc-500 mt-2 text-sm font-mono">CREATE FARMER ACCOUNT</p>
         </div>
 
         {/* Mostrar errores */}
@@ -102,17 +102,17 @@ function RegisterPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           {/* Name */}
           <div>
-            <Label htmlFor="name">Nombre Completo</Label>
+            <Label htmlFor="name">Full Name</Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               <Input
                 id="name"
                 type="text"
-                placeholder="Juan Pérez"
+                placeholder="John Doe"
                 className="pl-10"
                 {...register("name", {
-                  required: "El nombre es requerido",
-                  minLength: { value: 3, message: "Mínimo 3 caracteres" }
+                  required: "name is required",
+                  minLength: { value: 3, message: "Minimum 3 characters" }
                 })}
                 error={errors.name}
               />
@@ -124,7 +124,7 @@ function RegisterPage() {
 
           {/* Email */}
           <div>
-            <Label htmlFor="email">Correo Electrónico</Label>
+            <Label htmlFor="email">Email Address</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               <Input
@@ -133,10 +133,10 @@ function RegisterPage() {
                 placeholder="agricultor@agro.com"
                 className="pl-10"
                 {...register("email", {
-                  required: "El correo es requerido",
+                  required: "The email is required",
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Correo electrónico inválido"
+                    message: "Invalid email address"
                   }
                 })}
                 error={errors.email}
@@ -149,7 +149,7 @@ function RegisterPage() {
 
           {/* Phone (Optional) */}
           <div>
-            <Label htmlFor="phone_number">Teléfono (Opcional)</Label>
+            <Label htmlFor="phone_number">Phone Number (Optional)</Label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               <Input
@@ -164,7 +164,7 @@ function RegisterPage() {
 
           {/* Password */}
           <div>
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               <Input
@@ -173,8 +173,8 @@ function RegisterPage() {
                 placeholder="••••••••"
                 className="pl-10"
                 {...register("password", {
-                  required: "La contraseña es requerida",
-                  minLength: { value: 6, message: "Mínimo 6 caracteres" }
+                  required: "Password is required",
+                  minLength: { value: 6, message: "Minimum 6 characters" }
                 })}
                 error={errors.password}
               />
@@ -186,7 +186,7 @@ function RegisterPage() {
 
           {/* Confirm Password */}
           <div>
-            <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               <Input
@@ -195,8 +195,8 @@ function RegisterPage() {
                 placeholder="••••••••"
                 className="pl-10"
                 {...register("confirmPassword", {
-                  required: "Confirma tu contraseña",
-                  validate: value => value === password || "Las contraseñas no coinciden"
+                  required: "Confirm your password",
+                  validate: value => value === password || "Passwords do not match"
                 })}
                 error={errors.confirmPassword}
               />
@@ -207,14 +207,14 @@ function RegisterPage() {
           </div>
 
           <Button type="submit" variant="primary" className="w-full" isLoading={loading}>
-            <User className="w-4 h-4" /> REGISTRAR CUENTA
+            <User className="w-4 h-4" /> Create Account
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-zinc-500">
-          ¿Ya tienes cuenta?{" "}
+          Already have an account?{" "}
           <Link to="/login" className="text-apple-green hover:underline font-bold">
-            Iniciar Sesión
+            Sign In
           </Link>
         </p>
       </Card>

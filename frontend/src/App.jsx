@@ -25,11 +25,11 @@ function AppContent() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rutas Públicas */}
+        {/* Define all Routes using React Router */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Redirección raíz inteligente */}
+        {/*  Redirect to dashboard if user is authenticated */}
         <Route
           path="/"
           element={
@@ -39,7 +39,7 @@ function AppContent() {
           }
         />
 
-        {/* Rutas Protegidas (Layout aplica a todas estas) */}
+        {/*  Wraps pages with layouts* */}
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/estimator" element={<EstimatorPage />} />
