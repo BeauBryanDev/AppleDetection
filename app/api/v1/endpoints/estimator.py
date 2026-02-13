@@ -4,6 +4,7 @@ from typing import Optional
 import uuid
 import time
 import os
+import json
 
 from app.db.session import get_db
 from app.db.models import farming as models
@@ -110,6 +111,8 @@ async def create_yield_estimate(
     file: UploadFile = File(...),
     orchard_id: Optional[int] = None,
     tree_id: Optional[int] = None,
+    confidence_threshold: float = 0.5,
+    preview: bool = True,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(deps.get_current_user_optional)
 ) :
@@ -120,15 +123,18 @@ async def create_yield_estimate(
     1. GUEST MODE (no authentication):
        - orchard_id and tree_id are optional/ignored
        - No DB save; returns inference results only
-    2. AUTHENTICATED MODE:
-       - orchard_id required for traceability
-       - tree_id optional
+    2. AUTHENTICATED MODE + PREVIEW:
+       - preview=True (default): Process image but don't save to DB (for user review)
+       - preview=False: Save to DB immediately
+    3. AUTHENTICATED MODE + SAVE:
        - Saves to DB: Image, Prediction, Detections, YieldRecord
 
     Args:
         file: Image file to process
         orchard_id: Orchard ID (required for auth mode)
         tree_id: Tree ID (optional)
+        confidence_threshold: Confidence threshold for detections
+        preview: If True, process but don't save to DB (default: True)
         db: Database session
         current_user: Optional authenticated user
 
@@ -173,10 +179,9 @@ async def create_yield_estimate(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Empty image file"
             )
-
+        deep_confidence_threshold = 0.64*confidence_threshold
         # Run inference
-
-        detection_results = model_engine.run_inference(image_bytes)
+        detection_results = model_engine.run_inference(image_bytes, deep_confidence_threshold)
         print(f"\n{'='*60}")
         print(f"Archivo: {file.filename}")
         print(f"Resultados: {detection_results}")
@@ -208,23 +213,28 @@ async def create_yield_estimate(
         #   Generate unique filename for storage and record
         unique_filename = f"{uuid.uuid4()}_{file.filename}"
         image_save_path = f"uploads/{unique_filename}"
-        
-        # Always save to YieldRecord (global history)
-        new_record = models.YieldRecord(
-            filename=unique_filename,
-            healthy_count=healthy,
-            damaged_count=damaged,
-            total_count=total,
-            health_index=health_idx,
-            user_id=current_user.id if current_user else None
-        )
-        db.add(new_record)
-        db.flush() 
-        
-        # Initialize prediction_id (will be set if authenticated and saving to DB)
+
+        # Initialize prediction_id and record_id
         prediction_id = None
-        print(f" Record saved with ID: {new_record.id}")
-        if not is_guest_mode and orchard_id is not None:
+        record_id = None
+
+        # Only save to database if NOT in preview mode
+        if not preview:
+            # Save to YieldRecord (global history)
+            new_record = models.YieldRecord(
+                filename=unique_filename,
+                healthy_count=healthy,
+                damaged_count=damaged,
+                total_count=total,
+                health_index=health_idx,
+                user_id=current_user.id if current_user else None
+            )
+            db.add(new_record)
+            db.flush()
+            record_id = new_record.id
+            print(f" Record saved with ID: {new_record.id}")
+
+        if not preview and not is_guest_mode and orchard_id is not None:
             # 2.1 Guardar Image
             new_image = models.Image(
                 user_id=current_user.id,
@@ -235,7 +245,7 @@ async def create_yield_estimate(
             db.add(new_image)
             db.flush()
             
-            # 2.2 Guardar Prediction vinculada
+            
             new_prediction = models.Prediction(
                 image_id=new_image.id,
                 model_version="YOLOv8s-Cyberpunk-v1",
@@ -269,33 +279,33 @@ async def create_yield_estimate(
                     )
                 ]
                 db.bulk_save_objects(new_detections)
-        
-        # Commit de todo
-        db.commit()
+
+        # Commit only if not in preview mode
+        if not preview:
+            db.commit()
+            print(f"✅ Saved to database - Record ID: {record_id}, Prediction ID: {prediction_id}")
         
 
-        # 5. GENERAR IMAGEN CON DETECCIONES (CYBERPUNK STYLE)
-
+        processed_image = draw_cyberpunk_detections(
+        image_bytes, 
+        detections_data, 
+        threshold=0.8*confidence_threshold # <--- CAMBIO 2: Pasar el threshold
+    )
         
-        processed_image = draw_cyberpunk_detections(image_bytes, detections_data)
-        
-        # 6. GUARDAR IMAGEN PROCESADA EN DISCO
-        
-        # Asegurar que el directorio uploads existe
         os.makedirs("uploads", exist_ok=True)
         
         with open(image_save_path, "wb") as f:
             f.write(processed_image)
+
+        if preview:
+            print(f"🔍 Preview mode - Image processed but NOT saved to database")
+        else:
+            print(f"💾 Image saved: {image_save_path}")
+            print(f"💾 YieldRecord ID: {record_id}")
+            if prediction_id:
+                print(f"💾 Prediction ID: {prediction_id}")
         
-        print(f" Image saved: {image_save_path}")
-        print(f" YieldRecord ID: {new_record.id}")
-        if prediction_id:
-            print(f" Prediction ID: {prediction_id}")
-        
-        # ============================================
-        # 7. RETORNAR RESPUESTA
-        # ============================================
-        
+        # Return Response with processed image and headers
         end_time = time.perf_counter()
         total_time = end_time - start_time
         ms = (end_time - start_time) / 1000
@@ -311,11 +321,15 @@ async def create_yield_estimate(
                 "X-Total-Count": str(total),
                 "X-Health-Index": str(health_idx),
                 "X-Inference-Time-Ms": str(inference_time),
-                "X-Record-ID": str(new_record.id),
+                "X-Record-ID": str(record_id) if record_id else "None",
                 "X-Prediction-ID": str(prediction_id) if prediction_id else "None",
+                "X-Preview-Mode": str(preview).lower(),
                 "X-Mode": "guest" if is_guest_mode else "authenticated",
                 "X-Orchard-ID": str(orchard_id) if orchard_id else "None",
-                "X-Tree-ID": str(tree_id) if tree_id else "None"
+                "X-Tree-ID": str(tree_id) if tree_id else "None",
+                "X-Confidences": json.dumps(detections_data["confidences"]),
+                "X-Image-Path": image_save_path,
+                "Access-Control-Expose-Headers": "X-Healthy-Count, X-Damaged-Count, X-Total-Count, X-Health-Index, X-Inference-Time-Ms, X-Record-ID, X-Prediction-ID, X-Confidences, X-Preview-Mode, X-Image-Path"
             }
         )
         
@@ -445,3 +459,146 @@ async def delete_estimation_record(
         "message": "Record deleted successfully",
         "record_id": record_id
     }
+    
+
+@router.post("/save-detection")
+async def save_detection_after_review(
+    request: yield_schema.SaveDetectionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    """
+    Save detection results to database after user review.
+
+    This endpoint is called after user reviews the preview and decides to save.
+
+    Args:
+        request: Detection data including counts, notes, and orchard/tree IDs
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        dict: Success message with record and prediction IDs
+    """
+    try:
+        # Extract filename from path
+        filename = request.image_path.split('/')[-1] if '/' in request.image_path else request.image_path
+
+        # Validate orchard ownership if provided
+        orchard = None
+        tree = None
+        if request.orchard_id:
+            orchard, tree = validate_orchard_and_tree(
+                request.orchard_id,
+                request.tree_id,
+                current_user,
+                db
+            )
+
+        # Save to YieldRecord
+        new_record = models.YieldRecord(
+            filename=filename,
+            healthy_count=request.healthy_count,
+            damaged_count=request.damaged_count,
+            total_count=request.total_count,
+            health_index=request.health_index,
+            user_id=current_user.id
+        )
+        db.add(new_record)
+        db.flush()
+
+        prediction_id = None
+
+        # Save detailed prediction ONLY if both orchard_id AND tree_id are provided
+        # (Images table requires tree_id to be non-null)
+        if request.orchard_id and request.tree_id:
+            # Create image record with full traceability
+            new_image = models.Image(
+                user_id=current_user.id,
+                orchard_id=request.orchard_id,
+                tree_id=request.tree_id,
+                image_path=request.image_path
+            )
+            db.add(new_image)
+            db.flush()
+
+            # Create prediction with user notes
+            new_prediction = models.Prediction(
+                image_id=new_image.id,
+                model_version="YOLOv8s-Cyberpunk-v1",
+                total_apples=request.total_count,
+                good_apples=request.healthy_count,
+                damaged_apples=request.damaged_count,
+                healthy_percentage=request.health_index,
+                user_notes=request.user_notes,
+                inference_time_ms=request.inference_time_ms 
+            )
+            db.add(new_prediction)
+            db.flush()
+            prediction_id = new_prediction.id
+
+            logger.info(f"✅ Saved with full traceability - Image ID: {new_image.id}, Prediction ID: {prediction_id}")
+        elif request.orchard_id:
+            logger.info(f"⚠️  Saved to YieldRecord only (no tree_id provided)")
+
+        db.commit()
+
+        logger.info(
+            f"✅ Detection saved after review - User: {current_user.id}, "
+            f"Record: {new_record.id}, Prediction: {prediction_id}"
+        )
+
+        return {
+            "status": "success",
+            "message": "Detection saved successfully",
+            "record_id": new_record.id,
+            "prediction_id": prediction_id
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error saving detection: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error saving detection: {str(e)}"
+        )
+
+
+@router.patch("/prediction/{prediction_id}/notes")
+async def update_prediction_notes(
+
+    prediction_id: int,
+    notes_data: dict, # get the notes data from the frontend
+    db: Session = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    
+    """_summary_
+
+    Raises:
+        HTTPException: If prediction not found
+        HTTPException: If user is not authorized to edit notes
+
+    Returns:
+        dict: Success message
+    """
+    # search for the prediction
+    prediction = db.query(models.Prediction).filter(
+        models.Prediction.id == prediction_id
+    ).first()
+
+    if not prediction:
+        raise HTTPException(status_code=404, detail="Prediction not found")
+
+    # validate ownership
+    image = db.query(models.Image).filter(models.Image.id == prediction.image_id).first()
+    if image.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this note")
+
+    # Update the notes
+    prediction.user_notes = notes_data.get("notes")
+    db.commit()
+    
+    return {"status": "success", "message": "Note updated"}

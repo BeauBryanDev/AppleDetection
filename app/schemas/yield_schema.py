@@ -48,7 +48,7 @@ class DetectionBase(BaseModel):
     y_max: int
 
 class PredictionResponse(BaseModel):
-    
+
     total_apples: int
     good_apples: int
     damaged_apples: int
@@ -56,5 +56,35 @@ class PredictionResponse(BaseModel):
     detections: List[DetectionBase]
 
     class Config:
-        
+
         orm_mode = True
+
+
+class SaveDetectionRequest(BaseModel):
+    """Schema for saving detection after user review"""
+
+    image_path: str = Field(..., description="Path to the processed image file")
+    healthy_count: int = Field(..., ge=0)
+    damaged_count: int = Field(..., ge=0)
+    total_count: int = Field(..., ge=0)
+    health_index: float = Field(..., ge=0, le=100)
+    user_notes: Optional[str] = None
+    orchard_id: Optional[int] = None
+    tree_id: Optional[int] = None
+    inference_time_ms: float = Field(default=0.0, ge=0, description="Inference time in milliseconds")
+    
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "image_path": "uploads/abc123_image.jpg",
+                "healthy_count": 10,
+                "damaged_count": 2,
+                "total_count": 12,
+                "health_index": 83.33,
+                "inference_time_ms": 150.5,
+                "user_notes": "Tree looks healthy, minor pest damage on 2 apples",
+                "orchard_id": 1,
+                "tree_id": 5
+            }
+        }

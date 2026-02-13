@@ -106,7 +106,7 @@ class AppleInference:
         else:
             return 0  # red_apple
 
-    def run_inference(self, image_bytes: bytes):
+    def run_inference(self, image_bytes: bytes, confidence_threshold: float = 0.45):
         """Excecute Detection , then it returns the apple number \counting/
             Run full detection pipeline on image bytes.
 
@@ -114,6 +114,7 @@ class AppleInference:
 
             Args:
                 image_bytes: Raw image data (e.g. from FastAPI UploadFile)
+                confidence_threshold: Minimum confidence for detections (default: 0.45)
 
             Returns:
                 dict: { ...}
@@ -142,11 +143,11 @@ class AppleInference:
         boxes = predictions[:, :4]
         scores = predictions[:, 4:]
         
-        print(f"Prediction way: {predictions.shape}") 
+        print(f"Prediction way: {predictions.shape}")
         print(f"Max Confident Detected: {np.max(scores):.4f}")
-        
+
         # 5. Confident Filtering
-        conf_threshold = 0.45
+        conf_threshold = confidence_threshold
         confidences = np.max(scores, axis=1)
         class_ids = np.argmax(scores, axis=1)
         mask = confidences > conf_threshold
@@ -267,5 +268,5 @@ class AppleInference:
 
 
 # Initialize the model engine
-model_path = str(Path(__file__).parent / "weights" / "best_model.onnx")
+model_path = str(Path(__file__).parent / "weights" / "best_model2.onnx")
 model_engine = AppleInference(model_path)

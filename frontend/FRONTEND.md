@@ -3,7 +3,7 @@
 A modern, responsive **React** dashboard for orchard management and AI‑powered apple yield estimation.  
 This frontend connects to a FastAPI backend (YOLOv8s + ONNX) to provide farmers with real‑time apple detection, historical tracking, and analytics.
 
-![App Screenshot](link-to-your-screenshot.png)
+![App Screenshot](../eg_test.png)
 
 ---
 
@@ -141,7 +141,7 @@ frontend/
 
 - **Node.js** 18+ (LTS recommended)
 - **npm** 9+ or **yarn** 1.22+
-- Backend API running (see [Backend README](../backend/README.md))
+- Backend API running (see [Backend README](../app/BACKEND.md))
 
 ### Step‑by‑Step
 

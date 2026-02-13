@@ -2,9 +2,10 @@ import os
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
+from dotenv import load_dotenv
 
-# Impport my own settings from FastAPI app
-from app.core.config import settings
+# Load .env file directly to get database credentials
+load_dotenv()
 
 # Import Base class from models to get metadata for Alembic
 from app.db.base import Base
@@ -17,8 +18,20 @@ from app.db.models.farming import (
 
 config = context.config
 
-# Set the SQLAlchemy URL from FastAPI settings
-config.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URI)
+# Build database URL from .env variables (supports both naming conventions)
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "apple_yield_db")
+# Support both DB_HOST and POSTGRES_SERVER
+DB_HOST = os.getenv("DB_HOST") or os.getenv("POSTGRES_SERVER", "localhost")
+# Support both DB_PORT and POSTGRES_PORT
+DB_PORT = os.getenv("DB_PORT") or os.getenv("POSTGRES_PORT", "5432")
+
+# Build the database URL
+database_url = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{DB_HOST}:{DB_PORT}/{POSTGRES_DB}"
+
+# Set the SQLAlchemy URL for Alembic
+config.set_main_option("sqlalchemy.url", database_url)
 
 # CLOGGING CONFIG 
 if config.config_file_name is not None:

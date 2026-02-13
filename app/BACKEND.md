@@ -276,12 +276,3 @@ docker-compose up --build
 open http://localhost:8000/docs
 
 ```
-
-## 📌 Key Takeaways for Your Presentation
-Clean Architecture – API, logic, DB, ML each have their own layer.
-
-Production‑ready – JWT, ONNX, migrations, environment config.
-
-Extensible – swapping fruit models or adding v2 endpoints requires minimal changes.
-
-Dev‑friendly – dependency injection, clear folder structure, auto‑documented schemas

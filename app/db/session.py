@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
+from app.db.base import Base
 
 load_dotenv()
 
@@ -33,9 +34,11 @@ if "${" in DATABASE_URL or not DATABASE_URL.startswith("sqlite"):
 engine = create_engine(DATABASE_URL,echo=os.getenv("ENV") == "development")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
+# Base = declarative_base()  //CAREFUL: This is now imported from app.db.base to avoid circular imports with models.
 
-#  Deps , FastAPI EndPoints Need Session Opens
+#  Deps , FastAPI EndPoints Need Sessio
+# 
+# n Opens
 
 def get_db():
     """

@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 import os
 from app.api.v1.endpoints import estimator, history, analytics, users, farming, auth
 from app.db.session import engine, Base
@@ -36,6 +38,33 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None,
     openapi_url="/openapi.json" if settings.DEBUG else None,
 )
+
+# Custom exception handler for validation errors
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    """
+    Custom handler for validation errors that returns a cleaner error message
+    instead of the raw Pydantic validation errors.
+    """
+    errors = []
+    for error in exc.errors():
+        field = '.'.join(str(x) for x in error['loc'][1:]) if len(error['loc']) > 1 else error['loc'][0]
+        errors.append({
+            "field": field,
+            "message": error['msg'],
+            "type": error['type']
+        })
+    
+    logger.warning(f"Validation error on {request.url.path}: {errors}")
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Validation error",
+            "errors": errors
+        }
+    )
+    
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -66,7 +95,8 @@ app.add_middleware(
         "X-Inference-Time-Ms",
         "X-Mode",
         "X-Orchard-ID",
-        "X-Tree-ID"
+        "X-Tree-ID",
+        "X-Image-Path",
     ]
 )
 

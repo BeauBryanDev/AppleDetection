@@ -291,6 +291,7 @@ export default function DashboardPage() {
                                         <div className={`inline-block px-3 py-1 rounded-full text-sm font-black border ${
                                             item.health_index >= 80 ? 'bg-apple-green/10 text-apple-green border-apple-green/30' : 
                                             item.health_index >= 50 ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30' : 'bg-red-500/10 text-red-500 border-red-500/30'
+                                            
                                         }`}>
                                             {item.health_index.toFixed(0)}%
                                         </div>

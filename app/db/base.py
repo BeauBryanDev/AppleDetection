@@ -18,17 +18,12 @@ metadata = MetaData(naming_convention=naming_convention)
 class Base(DeclarativeBase):
     """
     Base class for all SQLAlchemy models.
-    
+
     All model classes should inherit from this.
     Provides consistent table/constraint naming and a useful __repr__.
     """
     metadata = metadata
-    
-    def __init__(self, **kwargs):
-        
-        super().__init__(**kwargs)
-    
-    
+
     def to_dict(self):
         
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

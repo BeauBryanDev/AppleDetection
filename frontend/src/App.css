@@ -40,3 +40,19 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Slow pulsing animation for excellent health results */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.5);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 50px rgba(57, 255, 20, 0.8);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

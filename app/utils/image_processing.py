@@ -3,7 +3,7 @@ import numpy as np
 
 # Futurer Actions : drawing class name instead of "SYS: HEALTHY" — or keep the sci-fi flavor, for better UX. 
 
-def draw_cyberpunk_detections(image_bytes: bytes, detections: dict):
+def draw_cyberpunk_detections(image_bytes: bytes, detections: dict, threshold: float = 0.5):
     """
     Draw cyberpunk/HUD-style bounding boxes and labels on the input image.
 
@@ -73,6 +73,15 @@ def draw_cyberpunk_detections(image_bytes: bytes, detections: dict):
         if idx < len(confidences):
             
             label += f" {confidences[idx]:.2f}"
+            
+            
+        for i in range(len(boxes)):
+            
+            confidence = confidences[i]
+            if confidence < 0.8*threshold: # Ignore low confidence boxes
+                continue
+            
+            box = boxes[i]
 
         # Drawn Main Bounding Box
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)

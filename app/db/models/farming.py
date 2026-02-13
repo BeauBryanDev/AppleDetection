@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-from app.db.session import Base
+from app.db.base import Base
 from datetime import datetime, timedelta, timezone
 
 
@@ -20,7 +20,7 @@ class YieldRecord(Base):
     damaged_count = Column(Integer)
     total_count = Column(Integer)
     health_index = Column(Float)  # (healthy / total) * 100
-    created_at = Column(DateTime, default=get_bogota_time)
+    created_at = Column(DateTime, default=get_bogota_time, onupdate=get_bogota_time)
     
     # Relationship to User
     user = relationship("User", foreign_keys=[user_id])
@@ -35,6 +35,7 @@ class Orchard(Base):
     name = Column(String, nullable=False)
     location = Column(String)
     n_trees = Column(Integer)
+    address = Column(String, nullable=True)
     
     owner = relationship("User", back_populates="orchards")
     trees = relationship("Tree", back_populates="orchard")
@@ -69,7 +70,7 @@ class Image(Base):
     tree_id = Column(Integer, ForeignKey("trees.id"), nullable=False)
     
     image_path = Column(String, nullable=False)
-    uploaded_at = Column(DateTime, default=get_bogota_time)
+    uploaded_at = Column(DateTime, default=get_bogota_time, onupdate=get_bogota_time)
     
     tree = relationship("Tree", back_populates="images")
     orchard = relationship("Orchard") # Para acceder a orchard.name
@@ -91,6 +92,7 @@ class Prediction(Base):
     damaged_apples = Column(Integer)
     healthy_percentage = Column(Float)
     inference_time_ms = Column(Float)
+    user_notes = Column(String(500), nullable=True)
     
     image = relationship("Image", back_populates="prediction")
     detections = relationship("Detection", back_populates="prediction")
