@@ -211,7 +211,7 @@ async def create_yield_estimate(
         
         
         #   Generate unique filename for storage and record
-        unique_filename = f"{uuid.uuid4()}_{file.filename}"
+        unique_filename = f"{uuid.uuid4()}_{os.path.basename(file.filename)}"
         image_save_path = f"uploads/{unique_filename}"
 
         # Initialize prediction_id and record_id
