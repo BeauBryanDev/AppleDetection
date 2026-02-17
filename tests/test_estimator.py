@@ -13,27 +13,6 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import os
 
-# Helper to create a JWT token for testing purposes.
-def create_jwt_token(user_id: int, role: UserRole, expires_delta: timedelta = None) -> str:
-    if expires_delta is None:
-        expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    expire = datetime.now(timezone.utc) + expires_delta
-    to_encode = {"sub": str(user_id), "role": role.value, "exp": expire}
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
-
-# Dummy image for testing
-DUMMY_IMAGE = ("test_image.jpg", b"fake_image_bytes", "image/jpeg")
-
-# Mock inference results
-MOCK_INFERENCE_RESULTS = {
-    "counts": {"red_apple": 3, "green_apple": 2, "damaged_apple": 1, "total": 6},
-    "detections": {
-        "boxes": [[10, 10, 50, 50], [60, 60, 100, 100]],
-        "class_ids": [0, 1], # 0 for apple, 1 for damaged_apple
-        "confidences": [0.9, 0.8]
-    }
-}
 
 def test_estimator_upload_no_auth(client):
     """Guest mode: no auth required"""
@@ -58,6 +37,33 @@ def test_estimator_upload_no_auth(client):
         assert "X-Healthy-Count" in response.headers
         assert response.headers["X-Healthy-Count"] == "5"
         assert response.headers["X-Damaged-Count"] == "2"
+
+
+def test_estimator_missing_file(client):
+    response = client.post("/api/v1/estimator/estimate")
+    assert response.status_code == 422  # FastAPI validation error
+
+# Helper to create a JWT token for testing purposes.
+def create_jwt_token(user_id: int, role: UserRole, expires_delta: timedelta = None) -> str:
+    if expires_delta is None:
+        expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + expires_delta
+    to_encode = {"sub": str(user_id), "role": role.value, "exp": expire}
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+# Dummy image for testing
+DUMMY_IMAGE = ("test_image.jpg", b"fake_image_bytes", "image/jpeg")
+
+# Mock inference results
+MOCK_INFERENCE_RESULTS = {
+    "counts": {"red_apple": 3, "green_apple": 2, "damaged_apple": 1, "total": 6},
+    "detections": {
+        "boxes": [[10, 10, 50, 50], [60, 60, 100, 100]],
+        "class_ids": [0, 1], # 0 for apple, 1 for damaged_apple
+        "confidences": [0.9, 0.8]
+    }
+}
 
 
 def test_estimator_missing_file(client):
