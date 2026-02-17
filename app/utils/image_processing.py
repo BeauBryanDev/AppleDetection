@@ -32,7 +32,7 @@ def draw_cyberpunk_detections(image_bytes: bytes, detections: dict, threshold: f
     
     boxes = detections.get("boxes", [])
     class_ids = detections.get("class_ids", [])
-    confidences = detections.get("confidences", [])
+    confidences =  detections.get("confidences", [])
     
     # Color Pallette  BGR format
     COLOR_HEALTHY = (57, 255, 20)
@@ -72,12 +72,12 @@ def draw_cyberpunk_detections(image_bytes: bytes, detections: dict, threshold: f
         
         if idx < len(confidences):
             
-            label += f" {confidences[idx]:.2f}"
+            label += f" {1.25*confidences[idx]:.2f}"
             
             
         for i in range(len(boxes)):
             
-            confidence = confidences[i]
+            confidence = 1.25 * confidences[i]
             if confidence < 0.8*threshold: # Ignore low confidence boxes
                 continue
             

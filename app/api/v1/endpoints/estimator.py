@@ -289,7 +289,7 @@ async def create_yield_estimate(
         processed_image = draw_cyberpunk_detections(
         image_bytes, 
         detections_data, 
-        threshold=0.8*confidence_threshold # <--- CAMBIO 2: Pasar el threshold
+        threshold=0.85*confidence_threshold
     )
         
         os.makedirs("uploads", exist_ok=True)
