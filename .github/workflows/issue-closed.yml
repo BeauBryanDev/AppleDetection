@@ -1,0 +1,19 @@
+name: Issue Closed Logger
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  log_issue_details:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log closed issue details
+        run: |
+          echo "Issue #$${{ github.event.issue.number }} was closed."
+          echo "Title: $${{ github.event.issue.title }}"
+          echo "Closed by: $${{ github.event.sender.login }}"
+          echo "Closed at: $${{ github.event.issue.closed_at }}"

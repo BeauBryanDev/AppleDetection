@@ -157,17 +157,21 @@ async def create_yield_estimate(
             detail="Guest users cannot specify orchard_id or tree_id. Please login first."
         )
     
-    # Validate orchard and tree if in auth mode
-    orchard = None
-    tree = None
-    if not is_guest_mode and orchard_id is not None:
-        orchard, tree = validate_orchard_and_tree(
-            orchard_id, 
-            tree_id, 
-            current_user, 
-            db
-        )
-    
+    # Authenticated mode validation for orchard_id and tree_id
+    if not is_guest_mode:
+        if orchard_id is None and tree_id is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tree ID cannot be provided without an Orchard ID."
+            )
+        # Validate orchard and tree if in auth mode and orchard_id is provided
+        if orchard_id is not None:
+            orchard, tree = validate_orchard_and_tree(
+                orchard_id,
+                tree_id,
+                current_user,
+                db
+            )    
 
     # Read image bytes for inference
     try:

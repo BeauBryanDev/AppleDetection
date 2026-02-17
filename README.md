@@ -1,249 +1,202 @@
-# Apple Yield Estimator with YOLOv8
+# Apple Yield Estimator (Backend + Frontend)
 
-A computer vision system for detecting and counting apples in orchard images using YOLOv8s and ONNX Runtime. This FastAPI-based application provides real-time apple detection, health classification, and yield estimation capabilities.
+A full‑stack apple yield estimation platform. The backend runs a YOLOv8s model (ONNX) to detect and count apples from orchard images, and the frontend provides a modern dashboard for estimation, farming records, analytics, and history.
+
+![App Screenshot](eg_test.png)
 
 ## Features
 
-- 🍎 **Apple Detection**: Detects healthy and damaged apples using YOLOv8s model
-- 📊 **Yield Estimation**: Calculates total apple count and health index
-- 🖼️ **Image Processing**: Handles JPEG/PNG image uploads for analysis
-- 🗄️ **Database Storage**: PostgreSQL integration for storing estimation records
-- 🐳 **Docker Support**: Containerized deployment with Docker Compose
-- 🚀 **FastAPI Backend**: High-performance async API framework
+- Apple detection (healthy vs damaged) with YOLOv8s + ONNX Runtime
+- Yield estimation with counts and health index
+- FastAPI backend with JWT auth, PostgreSQL storage, analytics, and farming/orchard management
+- React + Vite dashboard for uploading images, viewing results, and managing data
+- Dockerized backend, frontend, and database via Docker Compose
 
-## Model Information
+## Tech Stack
 
-- **Architecture**: YOLOv8s (small variant)
-- **Format**: ONNX (optimized for inference)
-- **Classes**: 
-  - `apple` (healthy apples)
-  - `damaged_apple` (damaged/defective apples)
-- **Input Size**: 640x640 pixels
-- **Model Location**: `app/models/weights/best_model.onnx`
+- Backend: FastAPI, SQLAlchemy, PostgreSQL, Pydantic v2, ONNX Runtime
+- Frontend: React 18, Vite, Tailwind CSS, React Router, Axios
+- Infra: Docker, Docker Compose, Nginx (frontend container)
 
-## Project Structure
+## Project Structure (high level)
 
 ```
 yieldEstimator/
-├── app/
-│   ├── api/endpoints/
-│   │   ├── estimator.py      # Main estimation endpoint
-│   │   └── history.py        # Historical data endpoint
-│   ├── db/
-│   │   ├── models.py         # SQLAlchemy database models
-│   │   └── session.py        # Database session configuration
-│   ├── models/
-│   │   ├── inference.py      # YOLOv8 inference engine
-│   │   └── weights/
-│   │       └── best_model.onnx # Trained model weights
-│   ├── schemas/
-│   │   └── yield_schema.py   # Pydantic response schemas
-│   └── main.py               # FastAPI application entry point
-├── docker-compose.yml        # Docker orchestration
-├── Dockerfile               # Container definition
-├── requirements.txt         # Python dependencies
-└── .env                    # Environment variables
+├── app/                 # FastAPI backend
+├── frontend/            # React frontend
+├── docker-compose.yml   # Orchestrates db + backend + frontend
+├── Dockerfile.backend   # Backend image
+├── Dockerfile.frontend  # Frontend image
+├── nginx.frontend.conf  # Nginx config for frontend container
+├── requirements.txt     # Backend dependencies
+└── uploads/             # Stored images/outputs
 ```
 
 ## Quick Start
 
-### Prerequisites
+### Option A: Docker Compose (recommended)
 
-- Docker and Docker Compose
-- Python 3.8+ (for local development)
-- PostgreSQL (if running locally without Docker)
-
-### Installation with Docker
-
-1. **Clone the repository:**
+1. Clone the repo:
    ```bash
-   git clone <repository-url>
+   git clone <your-repo-url>
    cd yieldEstimator
    ```
 
-2. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials
+2. Create a `.env` file in the project root:
+   ```env
+   # Required
+   SECRET_KEY=change-me-please-32+chars
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_DB=yield_estimator
+
+   # Backend DB connection (used by app/db/session.py)
+   DB_HOST=db
+   DB_PORT=5432
+
+   # Optional
+   DEBUG=true
+   LOG_LEVEL=INFO
    ```
 
-3. **Build and start services:**
+3. Build and run everything:
    ```bash
-   docker compose up --build -d
+   docker compose up --build
    ```
 
-4. **Verify deployment:**
-   - API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
-   - Database: localhost:5432
+4. Access the app:
+   - Frontend: `http://localhost`
+   - Backend API: `http://localhost:8000`
+   - API docs: `http://localhost:8000/docs`
 
-### Local Development
+To stop:
+```bash
+docker compose down
+```
 
-1. **Create virtual environment:**
+### Option B: Local Development (clone + run services)
+
+1. Clone the repo and create `.env` (same as above, but use `DB_HOST=localhost`).
+
+2. Backend:
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-2. **Install dependencies:**
-   ```bash
+   source venv/bin/activate
    pip install -r requirements.txt
-   ```
-
-3. **Set up PostgreSQL:**
-   ```bash
-   docker compose up db -d
-   ```
-
-4. **Run the application:**
-   ```bash
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
-## API Usage
+3. Frontend:
+   ```bash
+   cd frontend
+   npm install
+   ```
+   Create `frontend/.env`:
+   ```env
+   VITE_API_URL=http://localhost:8000/api/v1
+   ```
+   Then run:
+   ```bash
+   npm run dev
+   ```
 
-### Health Check
+Frontend dev server runs at `http://localhost:5173` by default.
+
+## API Documentation
+
+- OpenAPI/Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc` (only when `DEBUG=true`)
+
+### Core Endpoints
+
+Base prefix: `/api/v1`
+
+Estimator:
+- `POST /estimator/estimate` — upload an image and get apple counts
+
+Auth:
+- `POST /auth/login`
+- `POST /auth/register`
+
+Farming:
+- `POST /farming/orchards` — create orchard
+- `GET /farming/orchards` — list orchards
+- `GET /farming/orchards/{orchard_id}` — get orchard
+- `PATCH /farming/orchards/{orchard_id}` — update orchard
+- `DELETE /farming/orchards/{orchard_id}` — delete orchard
+- `POST /farming/orchard/{orchard_id}/create_tree` — create tree
+- `PUT /farming/orchard/{orchard_id}/tree/{tree_id}` — update tree
+- `GET /farming/orchard/{orchard_id}/trees` — list trees
+- `DELETE /farming/trees/{orchard_id}/{tree_id}` — delete tree
+- `DELETE /farming/images/{image_id}` — delete image audit
+
+History:
+- `GET /history` — user estimation history
+
+Analytics:
+- `GET /analytics` — dashboard stats
+
+Users:
+- `GET /users/me` — current user profile
+- `PUT /users/me` — update profile
+
+## API Quick Test
+
+Health check:
 ```bash
 curl http://localhost:8000/health
 ```
 
-### Apple Detection & Yield Estimation
-
-**Endpoint:** `POST /api/estimator/estimate`
-
-**Request:**
+Estimator (guest mode):
 ```bash
-curl -X POST "http://localhost:8000/api/estimator/estimate" \
+curl -X POST "http://localhost:8000/api/v1/estimator/estimate" \
   -H "accept: application/json" \
   -H "Content-Type: multipart/form-data" \
-  -F "file=@your_apple_image.jpg"
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "filename": "uuid_your_image.jpg",
-  "healthy_count": 15,
-  "damaged_count": 3,
-  "total_count": 18,
-  "health_index": 83.33,
-  "created_at": "2024-01-01T12:00:00"
-}
-```
-
-### Interactive API Documentation
-
-Visit `http://localhost:8000/docs` for interactive Swagger UI documentation.
-
-## Model Inference Details
-
-The inference engine (`app/models/inference.py`) performs:
-
-1. **Preprocessing:**
-   - Image resizing to 640x640
-   - BGR to RGB conversion
-   - Normalization to [0,1] range
-   - Dimension reordering (HWC → CHW)
-
-2. **Detection:**
-   - ONNX Runtime inference with CPU execution
-   - Confidence threshold: 0.4
-   - Non-Maximum Suppression (NMS) threshold: 0.45
-
-3. **Post-processing:**
-   - Bounding box filtering
-   - Class classification (healthy vs damaged)
-   - Count aggregation and health index calculation
-
-## Database Schema
-
-The application stores estimation records in PostgreSQL with the following schema:
-
-```sql
-CREATE TABLE yield_records (
-    id SERIAL PRIMARY KEY,
-    filename VARCHAR(255) NOT NULL,
-    healthy_count INTEGER NOT NULL,
-    damaged_count INTEGER NOT NULL,
-    total_count INTEGER NOT NULL,
-    health_index FLOAT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  -F "file=@path/to/your_image.jpg"
 ```
 
 ## Configuration
 
-### Environment Variables (.env)
+Backend settings are loaded from `.env` (see `app/core/config.py` and `app/db/session.py`).
+Common variables:
 
-```env
-# Database Configuration
-POSTGRES_USER=your_username
-POSTGRES_PASSWORD=your_password
-POSTGRES_DB=apple_yield_db
-POSTGRES_HOST=localhost
+- `SECRET_KEY` (required)
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- `DB_HOST`, `DB_PORT`
+- `DEBUG`, `LOG_LEVEL`
+- `MODEL_PATH` (default: `app/models/weights/best_model.onnx`)
 
-# Application Settings
-DEBUG=True
-API_HOST=0.0.0.0
-API_PORT=8000
+Frontend:
+- `VITE_API_URL` (local dev: `http://localhost:8000/api/v1`)
+- Docker build uses `VITE_API_URL=/api/v1` and proxies through Nginx
+
+## Model
+
+- Architecture: YOLOv8s (small)
+- Format: ONNX
+- Classes: `apple`, `damaged_apple`
+- Input size: 640x640
+- Weights: `app/models/weights/best_model.onnx`
+
+## Deployment Notes
+
+- Docker Compose is the simplest deployment path for local or single‑node servers.
+- The frontend container uses Nginx and proxies `/api/` to the backend container.
+- If you deploy behind a reverse proxy (Nginx/Traefik), ensure:
+  - `VITE_API_URL` points to the public API base, or use `/api/v1` with a proxy rule.
+  - Backend CORS allows your frontend origin.
+  - Ports `80` (frontend) and `8000` (backend) are reachable, or re‑map as needed.
+- For production:
+  - Set `DEBUG=false`
+  - Use a strong `SECRET_KEY` (>= 32 chars)
+  - Use persistent DB volumes (already in `docker-compose.yml`)
+
+## Tests
+
+```bash
+pytest
 ```
-
-## Performance Considerations
-
-- **Model**: YOLOv8s optimized for balance between speed and accuracy
-- **Inference**: ONNX Runtime with CPU provider (suitable for cloud deployment)
-- **Image Processing**: OpenCV for efficient computer vision operations
-- **API**: FastAPI with async support for concurrent requests
-
-## Monitoring and Logging
-
-- Application logs available in Docker container logs
-- Health check endpoint for monitoring service status
-- Database connection retry logic for robust deployment
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database Connection Error**
-   - Ensure PostgreSQL container is running
-   - Verify environment variables in .env file
-   - Check network connectivity between containers
-
-2. **Model Loading Error**
-   - Verify `best_model.onnx` exists in `app/models/weights/`
-   - Check file permissions and accessibility
-
-3. **Memory Issues**
-   - Monitor container resource usage
-   - Adjust Docker memory limits if needed
-   - Consider optimizing batch processing for large images
-
-### Docker Commands
-
-```bash
-# View logs
-docker compose logs -f
-
-# Stop services
-docker compose down
-
-# Rebuild without cache
-docker compose build --no-cache
-
-# Access database
-docker compose exec db psql -U your_username -d apple_yield_db
-```
+MIT (see `LICENSE`).
