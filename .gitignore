@@ -256,6 +256,10 @@ yarn.lock
 # Ignore all .backup 
 *.backup
 
+
+#ignroe backup directory
+backup/
+
 # Alembic migrations 
 alembic/versions/*
 !alembic/versions/README  # opcional, si quieres dejar un README vacío
@@ -278,3 +282,10 @@ __pycache__
 
 # Ignore private folder
 private/
+
+#project 
+uploads/
+backups/
+*.dump
+*.pem
+

@@ -1,0 +1,39 @@
+# Entornos virtuales y dependencias locales
+apples/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Datos y archivos temporales
+uploads/
+*.log
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Control de versiones
+.git
+.gitignore
+.gitattributes
+
+# Frontend (Node.js)
+**/node_modules/
+**/dist/
+**/build/
+.npm
+npm-debug.log*
+
+# Archivos de configuración y secretos (AWS EC2)
+.env
+.dockerignore
+docker-compose.yml
+docker-compose.override.yml
+
+# Archivos de sistema y editores
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
