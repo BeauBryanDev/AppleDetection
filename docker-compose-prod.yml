@@ -22,11 +22,11 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
+      dockerfile: Dockerfile.frontEnd
     container_name: apple_frontend
     restart: always
     ports:
-      - "80:80"
+      - "5173:80"
     depends_on:
       backend:
         condition: service_healthy

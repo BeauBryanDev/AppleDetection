@@ -21,7 +21,7 @@ htmlcov/
 
 # Frontend (Node.js)
 **/node_modules/
-**/dist/
+#**/dist/
 **/build/
 .npm
 npm-debug.log*
