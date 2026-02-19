@@ -33,6 +33,7 @@ class User(Base):
     last_login = Column(DateTime, nullable=True)
     is_premium = Column(Boolean, default=False)  # For future subscription features
     is_active = Column(Boolean, default=True)  # For future account suspension
+    avatar_url = Column(String, nullable=True)  # For future profile pictures
     
     # Relación: Un usuario tiene muchos huertos
     orchards = relationship("Orchard", back_populates="owner")

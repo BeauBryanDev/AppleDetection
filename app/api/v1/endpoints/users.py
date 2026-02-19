@@ -9,6 +9,9 @@ from app.core import security
 from app.api import deps
 from app.core.logging import logger
 
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from app.utils.s3_storage import upload_image_to_s3, get_presigned_url, delete_image_from_s3, s3_is_configured
+
 router = APIRouter()
 
 @router.get("/me", response_model=UserResponse)
@@ -214,4 +217,155 @@ async def update_user(
 
 
 
+@router.post("/{user_id}/profile-picture", response_model=UserResponse)
+async def upload_profile_picture(
+    user_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_user)
+):
+    """
+    Upload a profile picture for a user.
+    Saves the image to S3 under the avatars/ folder.
+    Only the user themselves or an admin can upload.
+    """
+    # Permission check
+    if current_user.role != UserRole.ADMIN and current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update this profile picture"
+        )
+
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/jpg", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file format. Allowed: {', '.join(allowed_types)}"
+        )
+
+    # Find the user
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Read image bytes
+    image_bytes = await file.read()
+    if len(image_bytes) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Empty image file"
+        )
+
+    # Delete old avatar from S3 if exists
+    if user.avatar_url and s3_is_configured():
+        # avatar_url is stored as 'avatars/filename.jpg'
+        delete_image_from_s3(user.avatar_url)
+
+    # Generate unique filename and upload to S3 avatars/ folder
+    import uuid
+    extension = file.filename.rsplit(".", 1)[-1].lower()
+    unique_filename = f"{uuid.uuid4()}.{extension}"
+    s3_key = f"avatars/{unique_filename}"
+
+    if s3_is_configured():
+        import boto3
+        import os
+        from botocore.exceptions import ClientError
+
+        client = boto3.client(
+            "s3",
+            region_name=os.getenv("AWS_REGION", "us-east-1"),
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        )
+        try:
+            client.put_object(
+                Bucket=os.getenv("S3_BUCKET_NAME"),
+                Key=s3_key,
+                Body=image_bytes,
+                ContentType=file.content_type,
+            )
+        except ClientError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error uploading image to S3: {e}"
+            )
+    else:
+        # Fallback local storage for development
+        import os
+        os.makedirs("uploads/avatars", exist_ok=True)
+        with open(f"uploads/avatars/{unique_filename}", "wb") as f:
+            f.write(image_bytes)
+
+    # Save s3_key in DB as avatar_url
+    user.avatar_url = s3_key
+    db.commit()
+    db.refresh(user)
+
+    logger.info(f"Profile picture updated for user {user_id}: {s3_key}")
+
+    return user
+
+@router.get("/{user_id}/profile-picture-url")
+async def get_profile_picture_url(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_user)
+):
+    """
+    Get a pre-signed URL for the user's profile picture from S3.
+    Valid for 1 hour.
+    """
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not user.avatar_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This user has no profile picture"
+        )
+
+    if s3_is_configured():
+        url = get_presigned_url(user.avatar_url, expiration_seconds=3600)
+        return {"url": url, "source": "s3"}
+    else:
+        return {"url": f"/uploads/{user.avatar_url}", "source": "local"}
     
+
+@router.delete("/{user_id}/profile-picture", response_model=UserResponse)
+async def delete_profile_picture(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_user)
+):
+    """
+    Delete a profile picture for a user.
+    Deletes the image from S3 under the avatars/ folder.
+    Only the user themselves or an admin can delete.
+    """
+    # Permission check
+    if current_user.role != UserRole.ADMIN and current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update this profile picture"
+        )
+
+    # Find the user
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Delete from S3 if exists
+    if user.avatar_url and s3_is_configured():
+        delete_image_from_s3(user.avatar_url)
+
+    # Clear avatar_url in DB
+    user.avatar_url = None
+    db.commit()
+    db.refresh(user)
+
+    logger.info(f"Profile picture deleted for user {user_id}")
+
+    return user
