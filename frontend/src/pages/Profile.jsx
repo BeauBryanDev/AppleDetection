@@ -90,12 +90,12 @@ export default function ProfilePage() {
 
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
-            setError('Formato no permitido. Usa JPG, PNG o WEBP.');
+            setError('Image Format not allowed. Use JPG, PNG o WEBP.');
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            setError('La imagen no puede superar 5MB.');
+            setError('Image size cannot be larger than 5MB.');
             return;
         }
 
@@ -114,7 +114,7 @@ export default function ProfilePage() {
 
             if (!res.ok) {
                 const err = await res.json();
-                throw new Error(err.detail || 'Error subiendo imagen');
+                throw new Error(err.detail || 'Error while uploading image');
             }
 
             const updatedUser = await res.json();
@@ -123,7 +123,7 @@ export default function ProfilePage() {
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
         } catch (err) {
-            setError(err.message || 'Error al subir la foto de perfil');
+            setError(err.message || 'Error while uploading image');
         } finally {
             setUploadingAvatar(false);
             e.target.value = '';
@@ -151,7 +151,7 @@ export default function ProfilePage() {
         e.preventDefault();
 
         if (formData.password && formData.password !== formData.confirmPassword) {
-            setError('Las contraseñas no coinciden');
+            setError('Password does not Match');
             return;
         }
 
@@ -176,7 +176,7 @@ export default function ProfilePage() {
             setFormData({ ...formData, password: '', confirmPassword: '' });
             setTimeout(() => setSuccess(false), 3000);
         } catch (err) {
-            setError(err.response?.data?.detail || 'Error al actualizar el perfil');
+            setError(err.response?.data?.detail || 'Error : Update profile Error');
         } finally {
             setSaving(false);
         }
@@ -186,7 +186,7 @@ export default function ProfilePage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
                 <div className="w-12 h-12 border-4 border-apple-green/30 border-t-apple-green rounded-full animate-spin mb-4"></div>
-                <p className="text-zinc-500 font-mono animate-pulse">Cargando perfil...</p>
+                <p className="text-zinc-500 font-mono animate-pulse">Loading User Profile...</p>
             </div>
         );
     }
@@ -194,7 +194,7 @@ export default function ProfilePage() {
     if (!profileData) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <p className="text-zinc-500">No se pudo cargar el perfil</p>
+                <p className="text-zinc-500">Profile cannot be load</p>
             </div>
         );
     }
@@ -208,11 +208,11 @@ export default function ProfilePage() {
                         <User className="w-8 h-8 text-apple-green" />
                         Mi Perfil
                     </h1>
-                    <p className="text-zinc-500 text-sm font-mono">Configuración de cuenta</p>
+                    <p className="text-zinc-500 text-sm font-mono">Edit my Account</p>
                 </div>
                 {!editing && (
                     <Button variant="primary" onClick={handleEdit}>
-                        <Edit2 className="w-4 h-4" /> Editar Perfil
+                        <Edit2 className="w-4 h-4" /> Edit Profile
                     </Button>
                 )}
             </div>
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                 <Card className="border-apple-green/30 bg-apple-green/10">
                     <div className="flex items-center gap-3 text-apple-green">
                         <CheckCircle className="w-5 h-5" />
-                        <p className="font-medium">Perfil actualizado exitosamente</p>
+                        <p className="font-medium">Profile has been Sucessfully Updated</p>
                     </div>
                 </Card>
             )}
@@ -289,13 +289,13 @@ export default function ProfilePage() {
 
                         <h3 className="text-white font-bold mb-6 flex items-center gap-2">
                             <User className="w-5 h-5 text-apple-green" />
-                            Información Personal
+                            Personal Information
                         </h3>
 
                         {editing ? (
                             <form onSubmit={handleSave} className="space-y-4">
                                 <div>
-                                    <Label htmlFor="name">Nombre Completo</Label>
+                                    <Label htmlFor="name">Full Name</Label>
                                     <div className="relative">
                                         <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                         <Input
@@ -310,7 +310,7 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="email">Correo Electrónico</Label>
+                                    <Label htmlFor="email">Email Address</Label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                         <Input
@@ -321,11 +321,11 @@ export default function ProfilePage() {
                                             disabled
                                         />
                                     </div>
-                                    <p className="text-xs text-zinc-600 mt-1">El correo no se puede cambiar</p>
+                                    <p className="text-xs text-zinc-600 mt-1">Email Address Cannot be Changed, Request changes to administrator</p>
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="phone_number">Teléfono (Opcional)</Label>
+                                    <Label htmlFor="phone_number">Phone Number</Label>
                                     <div className="relative">
                                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                         <Input
@@ -340,26 +340,26 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="pt-4 border-t border-zinc-800">
-                                    <h4 className="text-white font-medium mb-3">Cambiar Contraseña (Opcional)</h4>
+                                    <h4 className="text-white font-medium mb-3">Change Password(Opcional)</h4>
                                     <div className="space-y-3">
                                         <div>
-                                            <Label htmlFor="password">Nueva Contraseña</Label>
+                                            <Label htmlFor="password">New Password</Label>
                                             <Input
                                                 id="password"
                                                 type="password"
                                                 value={formData.password}
                                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                placeholder="Dejar vacío para no cambiar"
+                                                placeholder="Let it Empty"
                                             />
                                         </div>
                                         <div>
-                                            <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                                            <Label htmlFor="confirmPassword">Confirm Password</Label>
                                             <Input
                                                 id="confirmPassword"
                                                 type="password"
                                                 value={formData.confirmPassword}
                                                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                                placeholder="Confirmar nueva contraseña"
+                                                placeholder="Confirm New Password"
                                             />
                                         </div>
                                     </div>
@@ -368,10 +368,10 @@ export default function ProfilePage() {
                                 <div className="flex gap-2 pt-4">
                                     <Button type="submit" variant="primary" className="flex-1" isLoading={saving}>
                                         <Save className="w-4 h-4" />
-                                        Guardar Cambios
+                                        Save Changes
                                     </Button>
                                     <Button type="button" variant="ghost" onClick={handleCancel} disabled={saving}>
-                                        Cancelar
+                                        Cancel
                                     </Button>
                                 </div>
                             </form>
@@ -380,7 +380,7 @@ export default function ProfilePage() {
                                 <div className="flex items-start gap-3 p-3 bg-zinc-900/50 rounded-lg">
                                     <User className="w-5 h-5 text-zinc-500 mt-0.5" />
                                     <div className="flex-1">
-                                        <p className="text-xs text-zinc-500 font-mono uppercase">Nombre</p>
+                                        <p className="text-xs text-zinc-500 font-mono uppercase">Name</p>
                                         <p className="text-white font-medium">{profileData.name}</p>
                                     </div>
                                 </div>
@@ -396,7 +396,7 @@ export default function ProfilePage() {
                                 <div className="flex items-start gap-3 p-3 bg-zinc-900/50 rounded-lg">
                                     <Phone className="w-5 h-5 text-zinc-500 mt-0.5" />
                                     <div className="flex-1">
-                                        <p className="text-xs text-zinc-500 font-mono uppercase">Teléfono</p>
+                                        <p className="text-xs text-zinc-500 font-mono uppercase">Phone Number</p>
                                         <p className="text-white font-medium">{profileData.phone_number || 'No especificado'}</p>
                                     </div>
                                 </div>
@@ -404,7 +404,7 @@ export default function ProfilePage() {
                                 <div className="flex items-start gap-3 p-3 bg-zinc-900/50 rounded-lg">
                                     <Calendar className="w-5 h-5 text-zinc-500 mt-0.5" />
                                     <div className="flex-1">
-                                        <p className="text-xs text-zinc-500 font-mono uppercase">Miembro Desde</p>
+                                        <p className="text-xs text-zinc-500 font-mono uppercase">Joined From</p>
                                         <p className="text-white font-medium">
                                             {new Date(profileData.created_at).toLocaleDateString('es-ES', {
                                                 year: 'numeric',
@@ -441,7 +441,7 @@ export default function ProfilePage() {
 
                     <Card className="border-zinc-800 bg-cyber-dark">
                         <div className="text-center">
-                            <p className="text-xs text-zinc-500 font-mono uppercase mb-2">ID de Usuario</p>
+                            <p className="text-xs text-zinc-500 font-mono uppercase mb-2">User ID</p>
                             <p className="text-2xl font-bold font-mono text-apple-green">
                                 #{String(profileData.id).padStart(4, '0')}
                             </p>
