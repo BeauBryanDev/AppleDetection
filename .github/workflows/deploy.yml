@@ -34,7 +34,7 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key.pem
           chmod 600 ~/.ssh/deploy_key.pem
           echo "Key file size:"
-    	  wc -l ~/.ssh/deploy_key.pem
+          wc -l ~/.ssh/deploy_key.pem
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Copy frontend dist to EC2
