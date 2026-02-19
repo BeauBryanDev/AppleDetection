@@ -14,10 +14,9 @@ import {
 } from 'lucide-react';
 import { getAllEstimatesRequest, deleteEstimateRequest } from '../api/history';
 
-const API_BASE_URL = ''; // 'http://localhost:8000';
-
 export default function HistoryPage() {
   const [records, setRecords] = useState([]);
+  const [imageUrls, setImageUrls] = useState({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [pagination, setPagination] = useState({ skip: 0, limit: 50 });
@@ -36,6 +35,21 @@ export default function HistoryPage() {
       console.error('Error loading history:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getImageUrl = async (recordId) => {
+    if (imageUrls[recordId]) return imageUrls[recordId];
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/v1/history/${recordId}/image-url`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setImageUrls(prev => ({ ...prev, [recordId]: data.url }));
+      return data.url;
+    } catch {
+      return null;
     }
   };
 
@@ -174,13 +188,21 @@ export default function HistoryPage() {
                     {record.filename ? (
                       <div className="relative group">
                         <img
-                          src={`${API_BASE_URL}/outputs/${record.filename}`}
+                          src={imageUrls[record.id] || ''}
                           alt={record.filename}
                           className="w-16 h-16 object-cover rounded-lg border-2 border-zinc-700 hover:border-apple-green cursor-pointer transition-all hover:shadow-lg hover:shadow-apple-green/20 hover:scale-105"
-                          onClick={() => setSelectedImage(record)}
+                          onClick={() => {
+                            setSelectedImage(record);
+                            getImageUrl(record.id);
+                          }}
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64"%3E%3Crect fill="%23333" width="64" height="64"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23666"%3E?%3C/text%3E%3C/svg%3E';
+                          }}
+                          ref={(el) => {
+                            if (el && !imageUrls[record.id]) {
+                              getImageUrl(record.id);
+                            }
                           }}
                         />
                         <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg pointer-events-none">
@@ -291,7 +313,6 @@ export default function HistoryPage() {
           onClick={() => setSelectedImage(null)}
         >
           <div className="relative max-w-6xl w-full max-h-[90vh] animate-in zoom-in-95 duration-200">
-            {/* Close Button */}
             <button
               onClick={() => setSelectedImage(null)}
               className="absolute -top-12 right-0 p-2 text-white hover:text-apple-green transition-colors rounded-full hover:bg-zinc-800/50"
@@ -299,23 +320,20 @@ export default function HistoryPage() {
               <X className="w-8 h-8" />
             </button>
 
-            {/* Image Info */}
             <div className="absolute -top-12 left-0 text-white font-mono text-sm space-y-1">
               <p className="text-zinc-400">Registro #{selectedImage.id}</p>
               <p className="text-zinc-500 text-xs">{selectedImage.filename}</p>
             </div>
 
-            {/* Main Image */}
             <div className="bg-black rounded-lg overflow-hidden border-2 border-apple-green/30 shadow-2xl shadow-apple-green/10">
               <img
-                src={`${API_BASE_URL}/outputs/${selectedImage.filename}`}
+                src={imageUrls[selectedImage.id] || ''}
                 alt={selectedImage.filename}
                 className="w-full h-auto max-h-[85vh] object-contain"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
 
-            {/* Image Stats */}
             <div className="mt-4 grid grid-cols-4 gap-4" onClick={(e) => e.stopPropagation()}>
               <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
                 <div className="text-center">

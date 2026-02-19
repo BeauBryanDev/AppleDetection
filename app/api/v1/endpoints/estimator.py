@@ -15,6 +15,8 @@ from app.schemas import yield_schema
 from app.api import deps
 from fastapi.responses import Response
 from app.core.logging import logger
+from app.utils.s3_storage import upload_image_to_s3 , s3_is_configured
+
 
 router = APIRouter()
 
@@ -294,21 +296,21 @@ async def create_yield_estimate(
         image_bytes, 
         detections_data, 
         threshold=0.85*confidence_threshold
-    )
+         )
         
         os.makedirs("uploads", exist_ok=True)
-        
-        with open(image_save_path, "wb") as f:
-            f.write(processed_image)
+    
+        if  s3_is_configured():
+    
+            image_save_path = upload_image_to_s3( processed_image, unique_filename)
 
-        if preview:
-            print(f"🔍 Preview mode - Image processed but NOT saved to database")
-        else:
-            print(f"💾 Image saved: {image_save_path}")
-            print(f"💾 YieldRecord ID: {record_id}")
-            if prediction_id:
-                print(f"💾 Prediction ID: {prediction_id}")
-        
+        else : 
+
+            with open( image_save_path,  "wb" ) as f: 
+                
+                f.write(processed_image)
+	        
+
         # Return Response with processed image and headers
         end_time = time.perf_counter()
         total_time = end_time - start_time
@@ -453,9 +455,16 @@ async def delete_estimation_record(
             )
     
     # Delete physical file if exists
-    if os.path.exists(f"uploads/{record.filename}"):
-        os.remove(f"uploads/{record.filename}")
     
+    from app.utils.s3_storage import delete_image_from_s3,  s3_is_configured 
+    if s3_is_configured():
+	
+	    delete_image_from_s3(f"uploads/{record.filename}")
+
+    elif os.path.exists(f"upload/{record.filename}"):
+	    os.remove(f"uploads/{record.filename}")
+
+
     db.delete(record)
     db.commit()
     

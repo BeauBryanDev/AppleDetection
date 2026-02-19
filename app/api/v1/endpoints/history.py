@@ -7,6 +7,7 @@ from app.db.models.users import User, UserRole
 from app.schemas import yield_schema
 from typing import List
 from app.core.logging import logger
+from app.utils.s3_storage import get_presigned_url  , s3_is_configured
 
 router = APIRouter()
 
@@ -102,3 +103,31 @@ async def delete_estimate(
         "message": f"Registro {record_id} eliminado exitosamente",
         "deleted_id": record_id
     }
+
+
+
+@router.get("/{record_id}/image-url")
+async def get_image_url(
+    record_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    record = db.query(models.YieldRecord).filter(
+        models.YieldRecord.id == record_id
+    ).first()
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Registro no encontrado")
+
+    if current_user.role != UserRole.ADMIN and record.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Sin permiso")
+
+    if not record.filename:
+        raise HTTPException(status_code=404, detail="Imagen no disponible")
+
+    if s3_is_configured():
+        s3_key = f"uploads/{record.filename}"
+        url = get_presigned_url(s3_key, expiration_seconds=3600)
+        return {"url": url, "source": "s3"}
+    else:
+        return {"url": f"/outputs/{record.filename}", "source": "local"}

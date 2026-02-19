@@ -1,6 +1,7 @@
 import { LogOut, User, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
+import punkApple from '../../assets/punk_apple.svg';
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -27,8 +28,16 @@ export function Header() {
             <p className="text-sm font-bold text-white leading-none">{user?.name || 'Invitado'}</p>
             <p className="text-xs text-zinc-500 font-mono mt-1 uppercase">{user?.role || 'GUEST'}</p>
           </div>
-          <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center border border-zinc-700 text-apple-green">
-            <User className="w-5 h-5" />
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center border border-zinc-700 text-apple-green">
+              <User className="w-5 h-5" />
+            </div>
+            <img 
+              src={punkApple} 
+              alt="Punk Apple Logo" 
+              className="w-10 h-10 filter drop-shadow-lg hover:drop-shadow-[0_0_8px_#22c55e] transition-all duration-300"
+              title="Apple Yield Estimator"
+            />
           </div>
         </div>
 
