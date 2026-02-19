@@ -28,13 +28,24 @@ jobs:
           VITE_API_URL: /api/v1
         run: npm run build
 
+      - name: Open SSH port for GitHub Actions
+        run: |
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
+          aws ec2 authorize-security-group-ingress \
+            --group-id sg-0574f1c713a9f5f23 \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${RUNNER_IP}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key.pem
           chmod 600 ~/.ssh/deploy_key.pem
-          echo "Key file size:"
-          wc -l ~/.ssh/deploy_key.pem
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Copy frontend dist to EC2
@@ -48,9 +59,23 @@ jobs:
           ssh -i ~/.ssh/deploy_key.pem \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
             'cd ~/AppleDetection && \
-             git pull origin main && \
-             docker compose -f docker-compose-prod.yml up -d --build backend && \
-             docker compose -f docker-compose-prod.yml up -d --build frontend'
+            git pull origin master && \
+            docker compose -f docker-compose-prod.yml up -d --build backend && \
+            docker compose -f docker-compose-prod.yml up -d --build frontend'
+
+      - name: Remove SSH port after deploy
+        if: always()
+        run: |
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
+          aws ec2 revoke-security-group-ingress \
+            --group-id sg-0574f1c713a9f5f23 \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${RUNNER_IP}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
 
       - name: Verify deployment
         run: |
