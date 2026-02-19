@@ -242,7 +242,8 @@ test_api.py
 node_modules/
 
 #Ignore package-lock.json
-package-lock.json
+# No longer I need it to Deploy Action so No longer Ignore it
+#package-lock.json
 
 #Ignore yarn.lock
 yarn.lock
