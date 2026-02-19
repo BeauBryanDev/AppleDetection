@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { getAllEstimatesRequest, deleteEstimateRequest } from '../api/history';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = ''; // 'http://localhost:8000';
 
 export default function HistoryPage() {
   const [records, setRecords] = useState([]);

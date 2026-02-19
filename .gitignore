@@ -289,3 +289,7 @@ backups/
 *.dump
 *.pem
 
+#Ingorme rehasher
+
+rehash_users_passwords.py
+
