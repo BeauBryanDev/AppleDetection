@@ -268,5 +268,5 @@ class AppleInference:
 
 
 # Initialize the model engine
-model_path = str(Path(__file__).parent / "weights" / "best_model2.onnx")
+model_path = str(Path(__file__).parent / "weights" / "best_model.onnx")
 model_engine = AppleInference(model_path)
