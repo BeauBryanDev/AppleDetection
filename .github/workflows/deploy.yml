@@ -60,8 +60,8 @@ jobs:
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
             'cd ~/AppleDetection && \
             git pull origin master && \
-            docker compose -f docker-compose-prod.yml up -d --build backend && \
-            docker compose -f docker-compose-prod.yml up -d --build frontend'
+            docker compose -f docker-compose-prod.yml up -d --build frontend && \
+            docker compose -f docker-compose-prod.yml restart backend'
 
       - name: Remove SSH port after deploy
         if: always()
