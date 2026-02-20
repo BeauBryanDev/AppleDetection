@@ -28,6 +28,11 @@ export function Header() {
       console.error('Error loading avatar:', err);
     }
   };
+  useEffect(() => {
+  if (user?.id) {
+    loadAvatarUrl(user.id);
+  }
+}, [user?.id]);
 
   return (
     <header className="h-16 bg-cyber-dark/80 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between px-6 sticky top-0 z-40">

@@ -48,6 +48,7 @@ class UserResponse(UserBase):
     
     id: int
     created_at: datetime
+    avatar_url: Optional[str] = None  
 
     class Config:
         
