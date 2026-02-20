@@ -200,12 +200,12 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6 lg:space-y-7">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-zinc-800 pb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-                        <User className="w-8 h-8 text-apple-green" />
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
+                        <User className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
                         Mi Perfil
                     </h1>
                     <p className="text-zinc-500 text-sm font-mono">Edit my Account</p>
@@ -237,7 +237,7 @@ export default function ProfilePage() {
                 </Card>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
                 {/* Profile Info Card */}
                 <div className="lg:col-span-2">
                     <Card className="border-zinc-800 bg-cyber-dark">
@@ -273,7 +273,7 @@ export default function ProfilePage() {
                                 />
                             </div>
                             <div className="text-center sm:text-left">
-                                <h3 className="text-white font-bold text-xl">{profileData.name}</h3>
+                                <h3 className="text-white font-bold text-lg sm:text-xl break-words">{profileData.name}</h3>
                                 <p className="text-zinc-500 text-sm font-mono">{profileData.email}</p>
                                 <button
                                     onClick={handleAvatarClick}

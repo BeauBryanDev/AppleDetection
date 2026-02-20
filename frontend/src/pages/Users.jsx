@@ -163,17 +163,17 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 lg:space-y-7">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-zinc-800 pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <Shield className="w-8 h-8 text-apple-green" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
+            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
             Gestión de Usuarios
           </h1>
           <p className="text-zinc-500 text-sm font-mono">Panel de administración</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Button
             variant="ghost"
             onClick={loadUsers}
@@ -190,7 +190,7 @@ export default function UsersPage() {
 
       {/* Current User Info */}
       <Card className="border-apple-green/30 bg-gradient-to-br from-zinc-900 to-black">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <div className="p-3 bg-apple-green/10 rounded-full border border-apple-green/30">
             <User className="w-6 h-6 text-apple-green" />
           </div>
@@ -199,7 +199,7 @@ export default function UsersPage() {
             <h3 className="text-white font-bold">{currentUser?.name}</h3>
             <p className="text-sm text-zinc-400">{currentUser?.email}</p>
           </div>
-          <div className="ml-auto">
+          <div className="sm:ml-auto">
             <span className="px-3 py-1 rounded-full bg-apple-green/10 text-apple-green text-xs font-bold border border-apple-green/30">
               {currentUser?.role}
             </span>
@@ -225,10 +225,10 @@ export default function UsersPage() {
           <table className="w-full text-sm text-left text-zinc-400">
             <thead className="text-xs text-zinc-500 uppercase bg-zinc-900/50">
               <tr>
-                <th className="px-4 py-3">Usuario</th>
-                <th className="px-4 py-3">Rol</th>
-                <th className="px-4 py-3">Contacto</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
+                <th className="px-3 sm:px-4 py-3">Usuario</th>
+                <th className="px-3 sm:px-4 py-3">Rol</th>
+                <th className="px-3 sm:px-4 py-3">Contacto</th>
+                <th className="px-3 sm:px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -245,11 +245,11 @@ export default function UsersPage() {
                 <>
                   {users.map((user) => (
                     <tr key={user.id} className="border-b border-zinc-800 hover:bg-zinc-800/30">
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3">
                         <div className="font-medium text-white">{user.name}</div>
                         <div className="text-xs text-zinc-500">{user.email}</div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3">
                         <span className={`px-2 py-0.5 rounded text-xs font-medium border ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-500 border-purple-500/30' :
                           user.role === 'farmer' ? 'bg-apple-green/10 text-apple-green border-apple-green/30' :
                             'bg-zinc-700/30 text-zinc-400 border-zinc-600'
@@ -257,10 +257,10 @@ export default function UsersPage() {
                           {user.role}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3">
                         {user.phone_number || '-'}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-3 sm:px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
                           <button onClick={() => openEditModal(user)} className="p-1 hover:text-apple-green transition-colors">
                             <Edit2 className="w-4 h-4" />

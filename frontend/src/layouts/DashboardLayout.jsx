@@ -27,11 +27,11 @@ export function DashboardLayout() {
       <Sidebar />
 
       {/* Contenido Principal */}
-      <main className="flex-1 ml-64 flex flex-col min-h-screen">
+      <main className="flex-1 lg:ml-64 flex flex-col min-h-screen pb-20 lg:pb-0">
         <Header />
 
         {/* Aquí se renderizan las páginas (Dashboard, Estimator, etc.) */}
-        <div className="p-8 fade-in-animation">
+        <div className="p-4 sm:p-6 lg:p-8 xl:p-10 fade-in-animation">
           <Outlet />
         </div>
       </main>

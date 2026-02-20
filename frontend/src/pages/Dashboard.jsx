@@ -125,15 +125,15 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 lg:space-y-8 xl:space-y-10 animate-in fade-in duration-500">
       
       {/* 1. Header with Orchard Selector */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-zinc-800 pb-6">
         <div>
-          <h1 className="text-4xl font-black text-white mb-2 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-2 tracking-tight break-words">
             {orchard?.name || "Select Orchard"}
           </h1>
-          <div className="flex items-center gap-4 text-sm text-zinc-400 font-mono">
+          <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-zinc-400 font-mono">
             <span className="flex items-center gap-1">
                <MapPin className="w-4 h-4 text-apple-green" /> {orchard?.location || "Unknown"}
             </span>
@@ -147,7 +147,7 @@ export default function DashboardPage() {
             <select 
               value={selectedOrchardId || ""}
               onChange={(e) => setSelectedOrchardId(Number(e.target.value))}
-              className="appearance-none bg-zinc-900 border border-zinc-700 text-white py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-apple-green transition-all cursor-pointer font-bold shadow-lg"
+              className="w-full sm:w-auto appearance-none bg-zinc-900 border border-zinc-700 text-white py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-apple-green transition-all cursor-pointer font-bold shadow-lg"
             >
               {orchards.map((o) => (
                 <option key={o.id} value={o.id}>{o.name}</option>
@@ -165,7 +165,7 @@ export default function DashboardPage() {
       )}
 
       {/* 2. KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         {stats.map((stat, i) => (
           <Card key={i} className="border-zinc-700/60 bg-black/60 hover:border-apple-green/40 transition-all">
             <div className="flex items-start justify-between">
@@ -182,11 +182,11 @@ export default function DashboardPage() {
       </div>
 
       {/* 3. Charts and Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 xl:gap-10">
         
         {/* Analytics Column */}
         <div className="space-y-6">
-          <Card className="p-6 border-zinc-700 bg-black/40">
+          <Card className="p-4 sm:p-6 border-zinc-700 bg-black/40">
             <h3 className="text-white font-bold mb-6 flex items-center gap-2 text-lg">
               <PieChartIcon className="w-5 h-5 text-apple-green" />
               Apple Distribution
@@ -221,7 +221,7 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-zinc-900 to-black border-zinc-700 p-6">
+          <Card className="bg-gradient-to-br from-zinc-900 to-black border-zinc-700 p-4 sm:p-6">
             <div className="mb-2 text-zinc-500 text-xs font-mono uppercase tracking-widest">Global Health Index</div>
             <div className="text-5xl font-black text-white mb-4">
               {summary?.health_score_avg.toFixed(1)}%
@@ -242,7 +242,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
             <Card className="p-0 overflow-hidden border-zinc-700 bg-cyber-dark">
                 <div className="p-5 border-b border-zinc-700 bg-black/40 flex justify-between items-center">
-                    <h3 className="font-black text-white text-xl flex items-center gap-2">
+                    <h3 className="font-black text-white text-base sm:text-xl flex items-center gap-2">
                         <Activity className="w-5 h-5 text-apple-green" /> RECENT ACTIVITY LOG
                     </h3>
                 </div>
@@ -251,20 +251,20 @@ export default function DashboardPage() {
                     <table className="w-full text-left border-collapse">
                         <thead className="text-xs text-zinc-500 uppercase bg-black/60 font-mono tracking-tighter">
                             <tr>
-                                <th className="px-6 py-4">Timestamp / ID</th>
-                                <th className="px-6 py-4">Tree Code</th>
-                                <th className="px-6 py-4 text-center">Health %</th>
-                                <th className="px-6 py-4 text-center">Apples (H / D)</th>
-                                <th className="px-6 py-4 text-center font-bold text-apple-green">Total</th>
-                                <th className="px-6 py-4 text-center">Status</th>
+                                <th className="px-4 sm:px-6 py-4">Timestamp / ID</th>
+                                <th className="px-4 sm:px-6 py-4">Tree Code</th>
+                                <th className="px-4 sm:px-6 py-4 text-center">Health %</th>
+                                <th className="px-4 sm:px-6 py-4 text-center">Apples (H / D)</th>
+                                <th className="px-4 sm:px-6 py-4 text-center font-bold text-apple-green">Total</th>
+                                <th className="px-4 sm:px-6 py-4 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800">
                             {detections.map((item) => (
                                 <tr key={item.prediction_id} className="hover:bg-apple-green/5 transition-all group">
                                     {/* FIXED DATE DISPLAY */}
-                                    <td className="px-6 py-5">
-                                        <div className="text-white font-black text-lg leading-none mb-1">
+                                    <td className="px-4 sm:px-6 py-5">
+                                        <div className="text-white font-black text-base sm:text-lg leading-none mb-1">
                                             {(() => {
                                                 const date = new Date(item.updated_at);
                                                 return !isNaN(date.getTime())
@@ -280,14 +280,14 @@ export default function DashboardPage() {
                                                     : '--:--:--';
                                             })()}
                                         </div>
-                                        <div className="text-[16px] text-zinc-600 font-mono mt-1">#ID_{item.prediction_id}</div>
+                                        <div className="text-xs sm:text-sm text-zinc-600 font-mono mt-1">#ID_{item.prediction_id}</div>
                                     </td>
 
-                                    <td className="px-6 py-5">
-                                        <span className="text-zinc-300 font-bold text-xl">{item.tree_code}</span>
+                                    <td className="px-4 sm:px-6 py-5">
+                                        <span className="text-zinc-300 font-bold text-base sm:text-xl">{item.tree_code}</span>
                                     </td>
 
-                                    <td className="px-6 py-5 text-center">
+                                    <td className="px-4 sm:px-6 py-5 text-center">
                                         <div className={`inline-block px-3 py-1 rounded-full text-sm font-black border ${
                                             item.health_index >= 80 ? 'bg-apple-green/10 text-apple-green border-apple-green/30' : 
                                             item.health_index >= 50 ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30' : 'bg-red-500/10 text-red-500 border-red-500/30'
@@ -298,20 +298,20 @@ export default function DashboardPage() {
                                     </td>
 
                                     {/* APPLES (H/D) COLUMN */}
-                                    <td className="px-6 py-5 text-center font-mono">
-                                        <span className="text-apple-green font-bold text-lg">{item.healthy_apples}</span>
+                                    <td className="px-4 sm:px-6 py-5 text-center font-mono">
+                                        <span className="text-apple-green font-bold text-base sm:text-lg">{item.healthy_apples}</span>
                                         <span className="text-zinc-600 mx-2">/</span>
-                                        <span className="text-apple-red font-bold text-lg">{item.damaged_apples}</span>
+                                        <span className="text-apple-red font-bold text-base sm:text-lg">{item.damaged_apples}</span>
                                     </td>
 
                                     {/* NEW TOTAL COLUMN */}
-                                    <td className="px-6 py-5 text-center">
-                                        <div className="text-white text-2xl font-black tracking-tighter">
+                                    <td className="px-4 sm:px-6 py-5 text-center">
+                                        <div className="text-white text-lg sm:text-2xl font-black tracking-tighter">
                                             {item.healthy_apples + item.damaged_apples}
                                         </div>
                                     </td>
 
-                                    <td className="px-6 py-5 text-center">
+                                    <td className="px-4 sm:px-6 py-5 text-center">
                                         {item.damaged_apples === 0 ? (
                                             <CheckCircle2 className="w-6 h-6 text-apple-green mx-auto drop-shadow-[0_0_5px_rgba(57,255,20,0.5)]" />
                                         ) : (

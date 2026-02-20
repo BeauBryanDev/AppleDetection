@@ -35,18 +35,18 @@ export function Header() {
 }, [user?.id]);
 
   return (
-    <header className="h-16 bg-cyber-dark/80 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between px-6 sticky top-0 z-40">
-      <div className="text-zinc-400 text-sm font-mono">
+    <header className="h-16 bg-cyber-dark/80 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between px-3 sm:px-4 lg:px-6 sticky top-0 z-40">
+      <div className="hidden sm:block text-zinc-400 text-sm font-mono">
         SYSTEM: <span className="text-apple-green">ONLINE</span>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 ml-auto">
         <button className="p-2 text-zinc-400 hover:text-white transition-colors relative">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-apple-red rounded-full animate-pulse"></span>
         </button>
 
-        <div className="h-6 w-px bg-zinc-700 mx-2"></div>
+        <div className="hidden sm:block h-6 w-px bg-zinc-700 mx-1 lg:mx-2"></div>
 
         <div className="flex items-center gap-3">
           <div className="text-right hidden md:block">
@@ -54,7 +54,7 @@ export function Header() {
             <p className="text-xs text-zinc-500 font-mono mt-1 uppercase">{user?.role || 'GUEST'}</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full border border-zinc-700 overflow-hidden bg-zinc-800 flex items-center justify-center text-apple-green">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-zinc-700 overflow-hidden bg-zinc-800 flex items-center justify-center text-apple-green">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -69,13 +69,13 @@ export function Header() {
             <img
               src={punkApple}
               alt="Punk Apple Logo"
-              className="w-10 h-10 filter drop-shadow-lg hover:drop-shadow-[0_0_8px_#22c55e] transition-all duration-300"
+              className="hidden sm:block w-9 h-9 lg:w-10 lg:h-10 filter drop-shadow-lg hover:drop-shadow-[0_0_8px_#22c55e] transition-all duration-300"
               title="Apple Yield Estimator"
             />
           </div>
         </div>
 
-        <Button variant="ghost" onClick={logout} className="ml-2" title="Cerrar Sesión">
+        <Button variant="ghost" onClick={logout} className="ml-1 sm:ml-2 px-2 sm:px-4" title="Cerrar Sesión">
           <LogOut className="w-5 h-5" />
         </Button>
       </div>

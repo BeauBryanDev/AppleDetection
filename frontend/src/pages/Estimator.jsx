@@ -352,12 +352,12 @@ const [progress, setProgress] = useState(0);
 };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 lg:space-y-7">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-zinc-800 pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <Zap className="w-8 h-8 text-apple-green" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
+            <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
             Estimador de Rendimiento
           </h1>
           <p className="text-zinc-500 text-sm font-mono">
@@ -373,7 +373,7 @@ const [progress, setProgress] = useState(0);
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 lg:gap-8">
         {/* Upload Section */}
         <div className="space-y-4">
           <Card className="border-zinc-800 bg-cyber-dark">
@@ -387,7 +387,7 @@ const [progress, setProgress] = useState(0);
               <div>
                 <Label htmlFor="file-upload">Seleccionar Imagen</Label>
                 <div
-                  className={`mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg transition-colors ${
+                  className={`mt-2 flex justify-center px-3 sm:px-6 pt-4 sm:pt-5 pb-4 sm:pb-6 border-2 border-dashed rounded-lg transition-colors ${
                     isDragging
                       ? 'border-apple-green bg-apple-green/5'
                       : 'border-zinc-800 hover:border-zinc-700'
@@ -403,7 +403,7 @@ const [progress, setProgress] = useState(0);
                         <img
                           src={previewUrl}
                           alt="Preview"
-                          className="mx-auto h-48 w-auto rounded-lg"
+                          className="mx-auto max-h-48 sm:max-h-56 w-auto rounded-lg"
                         />
                         <button
                           type="button"
@@ -546,15 +546,15 @@ const [progress, setProgress] = useState(0);
                   </p>
                   <div className="flex items-center justify-center gap-3 mb-4">
                     <CheckCircle2 className="w-8 h-8 text-apple-green" />
-                    <h2 className="text-4xl font-bold text-white">
-                      {result.total_count || 0}
-                    </h2>
+                      <h2 className="text-3xl sm:text-4xl font-bold text-white">
+                        {result.total_count || 0}
+                      </h2>
                   </div>
                   <p className="text-zinc-400">Manzanas Detectadas</p>
                 </div>
               </Card>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card className="border-zinc-800 bg-black/40">
                   <div className="flex items-start justify-between">
                     <div>
@@ -626,11 +626,11 @@ const [progress, setProgress] = useState(0);
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Archivo:</span>
-                    <span className="text-white font-mono">{result.filename || 'N/A'}</span>
+                    <span className="text-white font-mono text-xs sm:text-sm break-all text-right">{result.filename || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">ID Predicción:</span>
-                    <span className="text-white font-mono">#{result.id || 'N/A'}</span>
+                    <span className="text-white font-mono text-xs sm:text-sm">#{result.id || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Timestamp:</span>

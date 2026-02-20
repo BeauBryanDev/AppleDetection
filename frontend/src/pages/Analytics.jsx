@@ -183,12 +183,12 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 lg:space-y-7">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-zinc-800 pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <BarChart3 className="w-8 h-8 text-apple-green" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
+            <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
             Analytics Dashboard
           </h1>
           <p className="text-zinc-500 text-sm font-mono">
@@ -203,7 +203,7 @@ export default function AnalyticsPage() {
           <Activity className="w-5 h-5 text-apple-green" />
           Resumen Global
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <Card className="border-zinc-800 bg-black/40 hover:bg-zinc-900/40 transition-colors">
             <div className="flex items-start justify-between">
               <div>
@@ -263,9 +263,9 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 lg:gap-8">
         {/* Global Apple Distribution Pie Chart */}
-        <Card className="p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
+        <Card className="p-4 sm:p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <PieChartIcon className="w-5 h-5 text-apple-green" />
             Distribución Global de Manzanas
@@ -302,7 +302,7 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Orchard Comparison Bar Chart */}
-        <Card className="p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
+        <Card className="p-4 sm:p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-apple-green" />
             Comparación por Huerto
@@ -332,11 +332,11 @@ export default function AnalyticsPage() {
           <Trees className="w-5 h-5 text-apple-green" />
           Métricas por Huerto
         </h3>
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {userSummary?.orchards?.map((orchard) => (
             <div key={orchard.orchard_id} className="p-4 rounded-lg bg-zinc-900/30 border border-zinc-800">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-white font-medium">{orchard.orchard_name}</h4>
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4">
+                <h4 className="text-white font-medium break-words">{orchard.orchard_name}</h4>
                 <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-1 rounded">
                   {orchard.location}
                 </span>
@@ -369,11 +369,11 @@ export default function AnalyticsPage() {
 
       {/* Orchard Details Section */}
       {selectedOrchard && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 lg:gap-8">
           {/* Health Trend Line Chart */}
           <div className="lg:col-span-2">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-white font-bold flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+              <h2 className="text-white font-bold flex items-center gap-2 break-words">
                 <LineChartIcon className="w-5 h-5 text-apple-green" />
                 Tendencia de Salud - {selectedOrchard.name}
               </h2>
@@ -407,7 +407,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            <Card className="p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
+            <Card className="p-4 sm:p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={trendChartData}>
                   <defs>
@@ -501,7 +501,7 @@ export default function AnalyticsPage() {
               <TrendingUp className="w-5 h-5 text-apple-green" />
               Salud Promedio por Árbol
             </h2>
-            <Card className="p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
+            <Card className="p-4 sm:p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart
                   data={treesSummary?.trees?.slice(0, 8).map(t => ({

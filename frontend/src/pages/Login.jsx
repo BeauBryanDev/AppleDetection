@@ -55,11 +55,11 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-cyber-black via-zinc-950 to-black flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-apple-green to-green-600 rounded-2xl mb-4 shadow-2xl shadow-apple-green/20">
-            <Apple className="w-10 h-10 text-black" />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-apple-green to-green-600 rounded-2xl mb-4 shadow-2xl shadow-apple-green/20">
+            <Apple className="w-8 h-8 sm:w-10 sm:h-10 text-black" />
           </div>
-          <h1 className="text-4xl font-black text-white mb-2 tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-black text-white mb-2 tracking-tight">
             Apple Yield Estimator
           </h1>
           <p className="text-zinc-400 font-mono text-sm">
@@ -68,7 +68,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <Card className="p-8 bg-black/40 border-zinc-800 backdrop-blur-sm">
+        <Card className="p-5 sm:p-8 bg-black/40 border-zinc-800 backdrop-blur-sm">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div className="space-y-2">

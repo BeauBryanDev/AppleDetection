@@ -80,13 +80,13 @@ function RegisterPage() {
         {/* Efecto decorativo de fondo */}
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-apple-green/10 rounded-full blur-2xl"></div>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-zinc-900 rounded-full border border-zinc-800 shadow-neon-green">
-              <Sprout className="w-8 h-8 text-apple-green" />
+              <Sprout className="w-7 h-7 sm:w-8 sm:h-8 text-apple-green" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Create a New  <span className="text-apple-green">Farm </span>
           </h1>
           <p className="text-zinc-500 mt-2 text-sm font-mono">CREATE FARMER ACCOUNT</p>

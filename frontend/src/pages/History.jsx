@@ -79,12 +79,12 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 lg:space-y-7">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-zinc-800 pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <HistoryIcon className="w-8 h-8 text-apple-green" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
+            <HistoryIcon className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
             Historial de Estimaciones
           </h1>
           <p className="text-zinc-500 text-sm font-mono">
@@ -106,7 +106,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card className="border-zinc-800 bg-black/40">
           <div className="flex items-start justify-between">
             <div>
@@ -167,24 +167,24 @@ export default function HistoryPage() {
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-zinc-500 uppercase bg-black/40 font-mono">
               <tr>
-                <th className="px-6 py-3">ID</th>
-                <th className="px-6 py-3">Imagen</th>
-                <th className="px-6 py-3">Archivo</th>
-                <th className="px-6 py-3 text-center">Sanas</th>
-                <th className="px-6 py-3 text-center">Dañadas</th>
-                <th className="px-6 py-3 text-center">Total</th>
-                <th className="px-6 py-3 text-center">Índice Salud</th>
-                <th className="px-6 py-3">Fecha</th>
-                <th className="px-6 py-3 text-center">Acciones</th>
+                <th className="px-4 sm:px-6 py-3">ID</th>
+                <th className="px-4 sm:px-6 py-3">Imagen</th>
+                <th className="px-4 sm:px-6 py-3">Archivo</th>
+                <th className="px-4 sm:px-6 py-3 text-center">Sanas</th>
+                <th className="px-4 sm:px-6 py-3 text-center">Dañadas</th>
+                <th className="px-4 sm:px-6 py-3 text-center">Total</th>
+                <th className="px-4 sm:px-6 py-3 text-center">Índice Salud</th>
+                <th className="px-4 sm:px-6 py-3">Fecha</th>
+                <th className="px-4 sm:px-6 py-3 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
               {filteredRecords.map((record) => (
                 <tr key={record.id} className="hover:bg-zinc-800/30 transition-colors">
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-4">
                     <span className="text-white font-mono">#{record.id}</span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-4">
                     {record.filename ? (
                       <div className="relative group">
                         <img
@@ -215,21 +215,21 @@ export default function HistoryPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-white font-medium truncate max-w-xs text-sm">
+                  <td className="px-4 sm:px-6 py-4">
+                    <div className="text-white font-medium truncate max-w-[180px] sm:max-w-xs text-sm">
                       {record.filename || 'N/A'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 sm:px-6 py-4 text-center">
                     <span className="text-apple-green font-bold">{record.healthy_count || 0}</span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 sm:px-6 py-4 text-center">
                     <span className="text-apple-red font-bold">{record.damaged_count || 0}</span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 sm:px-6 py-4 text-center">
                     <span className="text-white font-bold">{record.total_count || 0}</span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 sm:px-6 py-4 text-center">
                     <span
                       className={`px-2 py-1 rounded text-xs font-bold ${
                         record.health_index >= 80
@@ -242,12 +242,12 @@ export default function HistoryPage() {
                       {record.health_index?.toFixed(1) || 0}%
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-zinc-400 font-mono text-xs">
+                  <td className="px-4 sm:px-6 py-4 text-zinc-400 font-mono text-xs">
                     {record.created_at
                       ? new Date(record.created_at).toLocaleString()
                       : 'N/A'}
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 sm:px-6 py-4 text-center">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -274,7 +274,7 @@ export default function HistoryPage() {
 
         {/* Pagination */}
         {filteredRecords.length > 0 && (
-          <div className="p-4 border-t border-zinc-800 bg-black/20 flex justify-between items-center">
+          <div className="p-4 border-t border-zinc-800 bg-black/20 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
             <p className="text-sm text-zinc-500 font-mono">
               Mostrando {Math.min(pagination.skip + 1, filteredRecords.length)} -{' '}
               {Math.min(pagination.skip + pagination.limit, filteredRecords.length)} de{' '}
@@ -334,7 +334,7 @@ export default function HistoryPage() {
               />
             </div>
 
-            <div className="mt-4 grid grid-cols-4 gap-4" onClick={(e) => e.stopPropagation()}>
+            <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" onClick={(e) => e.stopPropagation()}>
               <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
                 <div className="text-center">
                   <p className="text-xs text-zinc-500 mb-1">Sanas</p>

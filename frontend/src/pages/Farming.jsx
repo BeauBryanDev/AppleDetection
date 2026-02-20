@@ -188,12 +188,12 @@ export default function FarmingPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 lg:space-y-7">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-zinc-800 pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <Trees className="w-8 h-8 text-apple-green" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
+            <Trees className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
             Gestión de Huertos
           </h1>
           <p className="text-zinc-500 text-sm font-mono">Administra tus huertos y árboles</p>
@@ -209,7 +209,7 @@ export default function FarmingPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
         {/* Orchards List */}
         <div className="lg:col-span-1">
           <Card className="p-4 border-zinc-800 bg-cyber-dark">
@@ -272,8 +272,8 @@ export default function FarmingPage() {
         <div className="lg:col-span-2">
           {selectedOrchard ? (
             <Card className="p-4 border-zinc-800 bg-cyber-dark">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-white font-bold flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+                <h3 className="text-white font-bold flex items-center gap-2 break-words">
                   <Sprout className="w-4 h-4 text-apple-green" />
                   Árboles de {selectedOrchard.name} ({trees.length})
                 </h3>
