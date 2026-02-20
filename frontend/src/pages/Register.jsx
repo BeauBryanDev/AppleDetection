@@ -47,7 +47,7 @@ function RegisterPage() {
 
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.detail || 'Error al registrar usuario');
+      setError(err.response?.data?.detail || 'Error registering user');
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ function RegisterPage() {
 
       <Card className="w-full max-w-md border-t-4 border-t-apple-green shadow-2xl relative overflow-hidden">
 
-        {/* Efecto decorativo de fondo */}
+        {/* Decorative background effect */}
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-apple-green/10 rounded-full blur-2xl"></div>
 
         <div className="text-center mb-6 sm:mb-8">
@@ -92,7 +92,7 @@ function RegisterPage() {
           <p className="text-zinc-500 mt-2 text-sm font-mono">CREATE FARMER ACCOUNT</p>
         </div>
 
-        {/* Mostrar errores */}
+        {/* Show errors */}
         {error && (
           <div className="bg-apple-red/10 border border-apple-red/50 text-apple-red p-3 rounded mb-4 text-sm text-center font-bold animate-pulse">
             ⚠️ {error}
@@ -130,7 +130,7 @@ function RegisterPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="agricultor@agro.com"
+                placeholder="farmer@agro.com"
                 className="pl-10"
                 {...register("email", {
                   required: "The email is required",
@@ -219,7 +219,7 @@ function RegisterPage() {
         </p>
       </Card>
 
-      {/* Footer minimalista */}
+      {/* Minimal footer */}
       <div className="absolute bottom-4 text-zinc-700 text-xs font-mono">
         SYSTEM STATUS: <span className="text-apple-green">ONLINE</span>
       </div>

@@ -17,16 +17,27 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react';
-import { getMeRequest, createUserRequest, updateUserRequest, deleteUserRequest, getUsersRequest } from '../api/users';
+import {
+  getMeRequest,
+  createUserRequest,
+  updateUserRequest,
+  deleteUserRequest,
+  getUsersRequest,
+  getUserProfilePictureUrlRequest
+} from '../api/users';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
+  const [avatarUrls, setAvatarUrls] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [error, setError] = useState(null);
+  const [avatarModalUser, setAvatarModalUser] = useState(null);
+  const [avatarModalUrl, setAvatarModalUrl] = useState(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
   // Form state
   const [userForm, setUserForm] = useState({
@@ -47,15 +58,15 @@ export default function UsersPage() {
       const res = await getMeRequest();
       setCurrentUser(res.data);
 
-      // Solo los admin pueden ver esta página
+      // Only admins can view this page
       if (res.data.role !== 'admin') {
-        setError('No tienes permisos para acceder a esta página');
+        setError('You do not have permission to access this page');
       } else {
         await loadUsers();
       }
     } catch (err) {
       console.error('Error loading current user:', err);
-      setError('Error al cargar datos del usuario');
+      setError('Error loading user data');
     } finally {
       setLoading(false);
     }
@@ -67,10 +78,24 @@ export default function UsersPage() {
       const res = await getUsersRequest();
       console.log('Users loaded:', res.data);
       setUsers(res.data);
+      const avatarEntries = await Promise.all(
+        res.data.map(async (user) => {
+          try {
+            const picRes = await getUserProfilePictureUrlRequest(user.id);
+            return [user.id, picRes.data?.url || null];
+          } catch (err) {
+            if (err.response?.status !== 404) {
+              console.error(`Error loading avatar for user ${user.id}:`, err);
+            }
+            return [user.id, null];
+          }
+        })
+      );
+      setAvatarUrls(Object.fromEntries(avatarEntries));
       setError(null);
     } catch (err) {
       console.error('Error loading users:', err);
-      setError('Error al cargar la lista de usuarios: ' + (err.response?.data?.detail || err.message));
+      setError('Error loading user list: ' + (err.response?.data?.detail || err.message));
     } finally {
       setLoadingUsers(false);
     }
@@ -82,11 +107,11 @@ export default function UsersPage() {
       await createUserRequest(userForm);
       setShowModal(false);
       setUserForm({ name: '', email: '', phone_number: '', password: '', role: 'farmer' });
-      alert('Usuario creado exitosamente');
+      alert('User created successfully');
       loadUsers();
     } catch (err) {
       console.error('Error creating user:', err);
-      alert('Error al crear usuario');
+      alert('Error creating user');
     }
   };
 
@@ -105,23 +130,23 @@ export default function UsersPage() {
       setShowModal(false);
       setEditingUser(null);
       setUserForm({ name: '', email: '', phone_number: '', password: '', role: 'farmer' });
-      alert('Usuario actualizado exitosamente');
+      alert('User updated successfully');
       loadUsers();
     } catch (err) {
       console.error('Error updating user:', err);
-      alert('Error al actualizar usuario');
+      alert('Error updating user');
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
+    if (!confirm('Are you sure you want to delete this user?')) return;
     try {
       await deleteUserRequest(userId);
-      alert('Usuario eliminado exitosamente');
+      alert('User deleted successfully');
       loadUsers();
     } catch (err) {
       console.error('Error deleting user:', err);
-      alert('Error al eliminar usuario');
+      alert('Error deleting user');
     }
   };
 
@@ -143,11 +168,30 @@ export default function UsersPage() {
     setShowModal(true);
   };
 
+  const handleOpenAvatarModal = async (user) => {
+    setAvatarModalUser(user);
+    setAvatarModalUrl(avatarUrls[user.id] || null);
+    setAvatarLoading(true);
+    try {
+      const res = await getUserProfilePictureUrlRequest(user.id);
+      const url = res.data?.url || null;
+      setAvatarModalUrl(url);
+      setAvatarUrls((prev) => ({ ...prev, [user.id]: url }));
+    } catch (err) {
+      if (err.response?.status !== 404) {
+        console.error('Error loading profile picture URL:', err);
+      }
+      setAvatarModalUrl(null);
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="w-12 h-12 border-4 border-apple-green/30 border-t-apple-green rounded-full animate-spin mb-4"></div>
-        <p className="text-zinc-500 font-mono animate-pulse">Cargando usuarios...</p>
+        <p className="text-zinc-500 font-mono animate-pulse">Loading users...</p>
       </div>
     );
   }
@@ -156,8 +200,8 @@ export default function UsersPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Shield className="w-16 h-16 text-apple-red mb-4" />
-        <h2 className="text-2xl font-bold text-white mb-2">Acceso Denegado</h2>
-        <p className="text-zinc-500">Solo los administradores pueden acceder a esta página</p>
+        <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
+        <p className="text-zinc-500">Only administrators can access this page</p>
       </div>
     );
   }
@@ -169,9 +213,9 @@ export default function UsersPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
             <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
-            Gestión de Usuarios
+            User Management
           </h1>
-          <p className="text-zinc-500 text-sm font-mono">Panel de administración</p>
+          <p className="text-zinc-500 text-sm font-mono">Administration panel</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Button
@@ -180,10 +224,10 @@ export default function UsersPage() {
             disabled={loadingUsers}
           >
             <RefreshCw className={`w-4 h-4 ${loadingUsers ? 'animate-spin' : ''}`} />
-            Actualizar
+            Refresh
           </Button>
           <Button variant="primary" onClick={openCreateModal}>
-            <Plus className="w-4 h-4" /> Crear Usuario
+            <Plus className="w-4 h-4" /> Create User
           </Button>
         </div>
       </div>
@@ -195,7 +239,7 @@ export default function UsersPage() {
             <User className="w-6 h-6 text-apple-green" />
           </div>
           <div>
-            <p className="text-xs text-zinc-500 font-mono uppercase">Usuario Actual</p>
+            <p className="text-xs text-zinc-500 font-mono uppercase">Current User</p>
             <h3 className="text-white font-bold">{currentUser?.name}</h3>
             <p className="text-sm text-zinc-400">{currentUser?.email}</p>
           </div>
@@ -211,7 +255,7 @@ export default function UsersPage() {
       <Card className="p-4 border-zinc-800 bg-cyber-dark">
         <h3 className="text-white font-bold mb-4 flex items-center gap-2">
           <UsersIcon className="w-5 h-5 text-apple-green" />
-          Lista de Usuarios ({users.length})
+          User List ({users.length})
         </h3>
 
         {error && currentUser?.role === 'admin' && (
@@ -225,19 +269,20 @@ export default function UsersPage() {
           <table className="w-full text-sm text-left text-zinc-400">
             <thead className="text-xs text-zinc-500 uppercase bg-zinc-900/50">
               <tr>
-                <th className="px-3 sm:px-4 py-3">Usuario</th>
-                <th className="px-3 sm:px-4 py-3">Rol</th>
+                <th className="px-3 sm:px-4 py-3">User</th>
+                <th className="px-3 sm:px-4 py-3">Role</th>
                 <th className="px-3 sm:px-4 py-3">Contacto</th>
-                <th className="px-3 sm:px-4 py-3 text-right">Acciones</th>
+                <th className="px-3 sm:px-4 py-3 text-center">Profile Picture</th>
+                <th className="px-3 sm:px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loadingUsers ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-8">
+                  <td colSpan="5" className="text-center py-8">
                     <div className="flex items-center justify-center gap-2 text-zinc-500">
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Cargando usuarios...</span>
+                      <span>Loading users...</span>
                     </div>
                   </td>
                 </tr>
@@ -260,6 +305,24 @@ export default function UsersPage() {
                       <td className="px-3 sm:px-4 py-3">
                         {user.phone_number || '-'}
                       </td>
+                      <td className="px-3 sm:px-4 py-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAvatarModal(user)}
+                          className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-zinc-700 bg-zinc-900/60 hover:border-apple-green transition-colors overflow-hidden"
+                          title="View profile picture"
+                        >
+                          {avatarUrls[user.id] ? (
+                            <img
+                              src={avatarUrls[user.id]}
+                              alt={`Avatar de ${user.name}`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="w-4 h-4 text-zinc-500" />
+                          )}
+                        </button>
+                      </td>
                       <td className="px-3 sm:px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
                           <button onClick={() => openEditModal(user)} className="p-1 hover:text-apple-green transition-colors">
@@ -274,8 +337,8 @@ export default function UsersPage() {
                   ))}
                   {users.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="text-center py-8 text-zinc-500">
-                        No hay usuarios registrados
+                      <td colSpan="5" className="text-center py-8 text-zinc-500">
+                        No users registered
                       </td>
                     </tr>
                   )}
@@ -286,13 +349,58 @@ export default function UsersPage() {
         </div>
       </Card>
 
+      {avatarModalUser && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setAvatarModalUser(null)}
+        >
+          <Card
+            className="w-full max-w-sm border-apple-green/30 bg-zinc-950"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-white font-bold text-lg">Profile Picture</h3>
+              <button
+                type="button"
+                onClick={() => setAvatarModalUser(null)}
+                className="p-2 hover:bg-zinc-800 rounded"
+              >
+                <X className="w-5 h-5 text-zinc-400" />
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-zinc-700 bg-zinc-900 mb-4 flex items-center justify-center">
+                {avatarLoading ? (
+                  <div className="w-8 h-8 border-4 border-apple-green/30 border-t-apple-green rounded-full animate-spin" />
+                ) : avatarModalUrl ? (
+                  <img
+                    src={avatarModalUrl}
+                    alt={`Avatar de ${avatarModalUser.name}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-zinc-600" />
+                )}
+              </div>
+
+              <p className="text-white font-semibold">{avatarModalUser.name}</p>
+              <p className="text-zinc-400 text-sm break-all">{avatarModalUser.email}</p>
+              {!avatarLoading && !avatarModalUrl && (
+                <p className="text-zinc-500 text-xs mt-2">This user has no profile picture.</p>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* User Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md border-apple-green/30 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-white">
-                {editingUser ? 'Editar Usuario' : 'Crear Usuario'}
+                {editingUser ? 'Edit User' : 'Create User'}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -304,7 +412,7 @@ export default function UsersPage() {
 
             <form onSubmit={editingUser ? handleUpdateUser : handleCreateUser} className="space-y-4">
               <div>
-                <Label htmlFor="name">Nombre Completo</Label>
+                <Label htmlFor="name">Full Name</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   <Input
@@ -312,7 +420,7 @@ export default function UsersPage() {
                     value={userForm.name}
                     onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
                     className="pl-10"
-                    placeholder="Juan Pérez"
+                    placeholder="John Doe"
                     required
                   />
                 </div>
@@ -320,7 +428,7 @@ export default function UsersPage() {
 
               {!editingUser && (
                 <div>
-                  <Label htmlFor="email">Correo Electrónico</Label>
+                  <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                     <Input
@@ -329,7 +437,7 @@ export default function UsersPage() {
                       value={userForm.email}
                       onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
                       className="pl-10"
-                      placeholder="usuario@agro.com"
+                      placeholder="user@agro.com"
                       required
                     />
                   </div>
@@ -337,7 +445,7 @@ export default function UsersPage() {
               )}
 
               <div>
-                <Label htmlFor="phone">Teléfono (Opcional)</Label>
+                <Label htmlFor="phone">Phone (Optional)</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   <Input
@@ -353,7 +461,7 @@ export default function UsersPage() {
 
               <div>
                 <Label htmlFor="password">
-                  {editingUser ? 'Nueva Contraseña (dejar vacío para no cambiar)' : 'Contraseña'}
+                  {editingUser ? 'New Password (leave empty to keep current)' : 'Password'}
                 </Label>
                 <Input
                   id="password"
@@ -367,16 +475,16 @@ export default function UsersPage() {
 
               {!editingUser && (
                 <div>
-                  <Label htmlFor="role">Rol</Label>
+                  <Label htmlFor="role">Role</Label>
                   <select
                     id="role"
                     value={userForm.role}
                     onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
                     className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-apple-green/50"
                   >
-                    <option value="farmer">FARMER (Agricultor)</option>
-                    <option value="admin">ADMIN (Administrador)</option>
-                    <option value="guest">GUEST (Invitado)</option>
+                    <option value="farmer">FARMER (Farmer)</option>
+                    <option value="admin">ADMIN (Administrator)</option>
+                    <option value="guest">GUEST (Guest)</option>
                   </select>
                 </div>
               )}
@@ -384,14 +492,14 @@ export default function UsersPage() {
               <div className="flex gap-2 pt-2">
                 <Button type="submit" variant="primary" className="flex-1">
                   <Save className="w-4 h-4" />
-                  {editingUser ? 'Actualizar' : 'Crear Usuario'}
+                  {editingUser ? 'Refresh' : 'Create User'}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setShowModal(false)}
                 >
-                  Cancelar
+                  Cancel
                 </Button>
               </div>
             </form>

@@ -10,7 +10,7 @@ export const Input = forwardRef(({ className, error, ...props }, ref) => {
         className={twMerge(
           clsx(
             "w-full bg-black/50 border rounded-lg px-4 py-3 text-white placeholder-zinc-500 outline-none transition-all duration-300",
-            // Estado Normal vs Error
+            // Normal state vs error state
             error 
               ? "border-apple-red focus:shadow-neon-red" 
               : "border-zinc-700 focus:border-apple-green focus:shadow-neon-green",

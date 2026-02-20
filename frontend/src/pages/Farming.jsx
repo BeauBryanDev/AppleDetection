@@ -62,7 +62,7 @@ export default function FarmingPage() {
       }
     } catch (err) {
       console.error('Error loading orchards:', err);
-      setError('Error al cargar los huertos');
+      setError('Error loading orchards');
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ export default function FarmingPage() {
       loadOrchards();
     } catch (err) {
       console.error('Error creating orchard:', err);
-      alert('Error al crear el huerto');
+      alert('Error creating orchard');
     }
   };
 
@@ -100,19 +100,19 @@ export default function FarmingPage() {
       loadOrchards();
     } catch (err) {
       console.error('Error updating orchard:', err);
-      alert('Error al actualizar el huerto');
+      alert('Error updating orchard');
     }
   };
 
   const handleDeleteOrchard = async (orchardId) => {
-    if (!confirm('¿Estás seguro? Se eliminarán todos los árboles e imágenes asociadas.')) return;
+    if (!confirm('Are you sure? All associated trees and images will be deleted.')) return;
     try {
       await deleteOrchardRequest(orchardId);
       setSelectedOrchard(null);
       loadOrchards();
     } catch (err) {
       console.error('Error deleting orchard:', err);
-      alert('Error al eliminar el huerto');
+      alert('Error deleting orchard');
     }
   };
 
@@ -125,7 +125,7 @@ export default function FarmingPage() {
       loadTrees(selectedOrchard.id);
     } catch (err) {
       console.error('Error creating tree:', err);
-      alert('Error al crear el árbol');
+      alert('Error creating tree');
     }
   };
 
@@ -139,18 +139,18 @@ export default function FarmingPage() {
       loadTrees(selectedOrchard.id);
     } catch (err) {
       console.error('Error updating tree:', err);
-      alert('Error al actualizar el árbol');
+      alert('Error updating tree');
     }
   };
 
   const handleDeleteTree = async (treeId) => {
-    if (!confirm('¿Estás seguro de eliminar este árbol?')) return;
+    if (!confirm('Are you sure you want to delete this tree?')) return;
     try {
       await deleteTreeRequest(selectedOrchard.id, treeId);
       loadTrees(selectedOrchard.id);
     } catch (err) {
       console.error('Error deleting tree:', err);
-      alert('Error al eliminar el árbol');
+      alert('Error deleting tree');
     }
   };
 
@@ -182,7 +182,7 @@ export default function FarmingPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="w-12 h-12 border-4 border-apple-green/30 border-t-apple-green rounded-full animate-spin mb-4"></div>
-        <p className="text-zinc-500 font-mono animate-pulse">Cargando datos...</p>
+        <p className="text-zinc-500 font-mono animate-pulse">Loading data...</p>
       </div>
     );
   }
@@ -194,12 +194,12 @@ export default function FarmingPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
             <Trees className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
-            Gestión de Huertos
+            Orchard Management
           </h1>
-          <p className="text-zinc-500 text-sm font-mono">Administra tus huertos y árboles</p>
+          <p className="text-zinc-500 text-sm font-mono">Manage your orchards and trees</p>
         </div>
         <Button variant="primary" onClick={openCreateOrchardModal}>
-          <Plus className="w-4 h-4" /> Nuevo Huerto
+          <Plus className="w-4 h-4" /> New Orchard
         </Button>
       </div>
 
@@ -215,7 +215,7 @@ export default function FarmingPage() {
           <Card className="p-4 border-zinc-800 bg-cyber-dark">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-apple-green" />
-              Mis Huertos ({orchards.length})
+              My Orchards ({orchards.length})
             </h3>
             <div className="space-y-2">
               {orchards.map((orchard) => (
@@ -233,7 +233,7 @@ export default function FarmingPage() {
                       <h4 className="text-white font-medium">{orchard.name}</h4>
                       <p className="text-xs text-zinc-500">{orchard.location}</p>
                       <p className="text-xs text-zinc-600 mt-1">
-                        {orchard.n_trees} árboles registrados
+                        {orchard.n_trees} registered trees
                       </p>
                     </div>
                     <div className="flex gap-1">
@@ -261,7 +261,7 @@ export default function FarmingPage() {
               ))}
               {orchards.length === 0 && (
                 <p className="text-center text-zinc-600 py-8 text-sm">
-                  No hay huertos registrados
+                  No orchards registered
                 </p>
               )}
             </div>
@@ -275,10 +275,10 @@ export default function FarmingPage() {
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
                 <h3 className="text-white font-bold flex items-center gap-2 break-words">
                   <Sprout className="w-4 h-4 text-apple-green" />
-                  Árboles de {selectedOrchard.name} ({trees.length})
+                  Trees in {selectedOrchard.name} ({trees.length})
                 </h3>
                 <Button variant="outline" size="sm" onClick={openCreateTreeModal}>
-                  <Plus className="w-4 h-4" /> Agregar Árbol
+                  <Plus className="w-4 h-4" /> Add Tree
                 </Button>
               </div>
 
@@ -291,7 +291,7 @@ export default function FarmingPage() {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h4 className="text-white font-medium">#{tree.tree_code}</h4>
-                        <p className="text-xs text-zinc-500">{tree.tree_type || 'Sin tipo'}</p>
+                        <p className="text-xs text-zinc-500">{tree.tree_type || 'No type'}</p>
                       </div>
                       <div className="flex gap-1">
                         <button
@@ -309,13 +309,13 @@ export default function FarmingPage() {
                       </div>
                     </div>
                     <div className="text-xs text-zinc-600 font-mono">
-                      ID: {tree.id} | Huerto: {selectedOrchard.name}
+                      ID: {tree.id} | Orchard: {selectedOrchard.name}
                     </div>
                   </div>
                 ))}
                 {trees.length === 0 && (
                   <div className="col-span-2 text-center text-zinc-600 py-12">
-                    No hay árboles registrados en este huerto
+                    No registered trees in this orchard
                   </div>
                 )}
               </div>
@@ -323,7 +323,7 @@ export default function FarmingPage() {
           ) : (
             <Card className="p-12 border-zinc-800 bg-cyber-dark text-center">
               <Trees className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-500">Selecciona un huerto para ver sus árboles</p>
+              <p className="text-zinc-500">Select an orchard to view its trees</p>
             </Card>
           )}
         </div>
@@ -335,7 +335,7 @@ export default function FarmingPage() {
           <Card className="w-full max-w-md border-apple-green/30">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-white">
-                {editingOrchard ? 'Editar Huerto' : 'Nuevo Huerto'}
+                {editingOrchard ? 'Edit Orchard' : 'New Orchard'}
               </h3>
               <button
                 onClick={() => setShowOrchardModal(false)}
@@ -349,21 +349,21 @@ export default function FarmingPage() {
               {!editingOrchard && (
                 <>
                   <div>
-                    <Label>Nombre del Huerto</Label>
+                    <Label>Orchard Name</Label>
                     <Input
                       value={orchardForm.name}
                       onChange={(e) => setOrchardForm({ ...orchardForm, name: e.target.value })}
-                      placeholder="Ej: Huerto Norte"
+                      placeholder="Ex: North Orchard"
                       required
                     />
                   </div>
 
                   <div>
-                    <Label>Ubicación</Label>
+                    <Label>Location</Label>
                     <Input
                       value={orchardForm.location}
                       onChange={(e) => setOrchardForm({ ...orchardForm, location: e.target.value })}
-                      placeholder="Ej: Sector A, Parcela 12"
+                      placeholder="Ex: Sector A, Plot 12"
                       required
                     />
                   </div>
@@ -371,7 +371,7 @@ export default function FarmingPage() {
               )}
 
               <div>
-                <Label>Número de Árboles</Label>
+                <Label>Number of Trees</Label>
                 <Input
                   type="number"
                   value={orchardForm.n_trees}
@@ -384,14 +384,14 @@ export default function FarmingPage() {
               <div className="flex gap-2">
                 <Button type="submit" variant="primary" className="flex-1">
                   <Save className="w-4 h-4" />
-                  {editingOrchard ? 'Actualizar' : 'Crear'}
+                  {editingOrchard ? 'Update' : 'Create'}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setShowOrchardModal(false)}
                 >
-                  Cancelar
+                  Cancel
                 </Button>
               </div>
             </form>
@@ -405,7 +405,7 @@ export default function FarmingPage() {
           <Card className="w-full max-w-md border-apple-green/30">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-white">
-                {editingTree ? 'Editar Árbol' : 'Nuevo Árbol'}
+                {editingTree ? 'Edit Tree' : 'New Tree'}
               </h3>
               <button
                 onClick={() => setShowTreeModal(false)}
@@ -417,35 +417,35 @@ export default function FarmingPage() {
 
             <form onSubmit={editingTree ? handleUpdateTree : handleCreateTree} className="space-y-4">
               <div>
-                <Label>Código del Árbol</Label>
+                <Label>Tree Code</Label>
                 <Input
                   value={treeForm.tree_code}
                   onChange={(e) => setTreeForm({ ...treeForm, tree_code: e.target.value })}
-                  placeholder="Ej: A-001"
+                  placeholder="Ex: A-001"
                   required
                 />
               </div>
 
               <div>
-                <Label>Tipo/Variedad</Label>
+                <Label>Type/Variety</Label>
                 <Input
                   value={treeForm.tree_type}
                   onChange={(e) => setTreeForm({ ...treeForm, tree_type: e.target.value })}
-                  placeholder="Ej: Granny Smith"
+                  placeholder="Ex: Granny Smith"
                 />
               </div>
 
               <div className="flex gap-2">
                 <Button type="submit" variant="primary" className="flex-1">
                   <Save className="w-4 h-4" />
-                  {editingTree ? 'Actualizar' : 'Crear'}
+                  {editingTree ? 'Update' : 'Create'}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setShowTreeModal(false)}
                 >
-                  Cancelar
+                  Cancel
                 </Button>
               </div>
             </form>

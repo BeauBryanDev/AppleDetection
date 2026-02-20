@@ -17,6 +17,11 @@ export const getUsersRequest = async (skip = 0, limit = 100) => {
   });
 };
 
+// Get user profile picture URL
+export const getUserProfilePictureUrlRequest = async (userId) => {
+  return client.get(`/users/${userId}/profile-picture-url`);
+};
+
 // Create new user (admin only)
 export const createUserRequest = async (userData) => {
   return client.post('/users/', userData);

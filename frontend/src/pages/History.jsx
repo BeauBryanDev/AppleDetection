@@ -58,13 +58,13 @@ export default function HistoryPage() {
   };
 
   const handleDelete = async (recordId) => {
-    if (!confirm('¿Estás seguro de eliminar este registro?')) return;
+    if (!confirm('Are you sure you want to delete this record?')) return;
     try {
       await deleteEstimateRequest(recordId);
       loadHistory();
     } catch (err) {
       console.error('Error deleting record:', err);
-      alert('Error al eliminar el registro');
+      alert('Error deleting record');
     }
   };
 
@@ -164,7 +164,7 @@ export default function HistoryPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="w-12 h-12 border-4 border-apple-green/30 border-t-apple-green rounded-full animate-spin mb-4"></div>
-        <p className="text-zinc-500 font-mono animate-pulse">Cargando historial...</p>
+        <p className="text-zinc-500 font-mono animate-pulse">Loading history...</p>
       </div>
     );
   }
@@ -176,10 +176,10 @@ export default function HistoryPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
             <HistoryIcon className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
-            Historial de Estimaciones
+            Estimation History
           </h1>
           <p className="text-zinc-500 text-sm font-mono">
-            Total de registros: {filteredRecords.length}
+            Total records: {filteredRecords.length}
           </p>
         </div>
 
@@ -188,7 +188,7 @@ export default function HistoryPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
           <input
             type="text"
-            placeholder="Buscar por ID o nombre..."
+            placeholder="Search by ID or filename..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-apple-green/50"
@@ -202,7 +202,7 @@ export default function HistoryPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] text-zinc-500 font-mono uppercase tracking-widest mb-1">
-                Total Procesadas
+                Total Processed
               </p>
               <h3 className="text-2xl font-bold text-white">{records.length}</h3>
             </div>
@@ -216,7 +216,7 @@ export default function HistoryPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] text-zinc-500 font-mono uppercase tracking-widest mb-1">
-                Manzanas Sanas
+                Healthy Apples
               </p>
               <h3 className="text-2xl font-bold text-white">
                 {records.reduce((sum, r) => sum + (r.healthy_count || 0), 0)}
@@ -232,7 +232,7 @@ export default function HistoryPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] text-zinc-500 font-mono uppercase tracking-widest mb-1">
-                Manzanas Dañadas
+                Damaged Apples
               </p>
               <h3 className="text-2xl font-bold text-white">
                 {records.reduce((sum, r) => sum + (r.damaged_count || 0), 0)}
@@ -250,7 +250,7 @@ export default function HistoryPage() {
         <div className="p-4 border-b border-zinc-800 bg-black/20">
           <h3 className="font-bold text-white flex items-center gap-2">
             <Calendar className="w-4 h-4 text-apple-green" />
-            Registros Históricos
+            Historical Records
           </h3>
         </div>
 
@@ -259,14 +259,14 @@ export default function HistoryPage() {
             <thead className="text-xs text-zinc-500 uppercase bg-black/40 font-mono">
               <tr>
                 <th className="px-4 sm:px-6 py-3">ID</th>
-                <th className="px-4 sm:px-6 py-3">Imagen</th>
-                <th className="px-4 sm:px-6 py-3">Archivo</th>
-                <th className="px-4 sm:px-6 py-3 text-center">Sanas</th>
-                <th className="px-4 sm:px-6 py-3 text-center">Dañadas</th>
+                <th className="px-4 sm:px-6 py-3">Image</th>
+                <th className="px-4 sm:px-6 py-3">File</th>
+                <th className="px-4 sm:px-6 py-3 text-center">Healthy</th>
+                <th className="px-4 sm:px-6 py-3 text-center">Damaged</th>
                 <th className="px-4 sm:px-6 py-3 text-center">Total</th>
-                <th className="px-4 sm:px-6 py-3 text-center">Índice Salud</th>
-                <th className="px-4 sm:px-6 py-3">Fecha</th>
-                <th className="px-4 sm:px-6 py-3 text-center">Acciones</th>
+                <th className="px-4 sm:px-6 py-3 text-center">Health Index</th>
+                <th className="px-4 sm:px-6 py-3">Date</th>
+                <th className="px-4 sm:px-6 py-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
@@ -351,8 +351,8 @@ export default function HistoryPage() {
                 <tr>
                   <td colSpan="9" className="px-6 py-12 text-center text-zinc-500">
                     {searchTerm
-                      ? 'No se encontraron registros con ese criterio'
-                      : 'No hay registros en el historial'}
+                      ? 'No records found for that filter'
+                      : 'No history records found'}
                   </td>
                 </tr>
               )}
@@ -364,8 +364,8 @@ export default function HistoryPage() {
         {filteredRecords.length > 0 && (
           <div className="p-4 border-t border-zinc-800 bg-black/20 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
             <p className="text-sm text-zinc-500 font-mono">
-              Mostrando {Math.min(pagination.skip + 1, filteredRecords.length)} -{' '}
-              {Math.min(pagination.skip + pagination.limit, filteredRecords.length)} de{' '}
+              Showing {Math.min(pagination.skip + 1, filteredRecords.length)} -{' '}
+              {Math.min(pagination.skip + pagination.limit, filteredRecords.length)} of{' '}
               {filteredRecords.length}
             </p>
             <div className="flex gap-2">
@@ -377,7 +377,7 @@ export default function HistoryPage() {
                   setPagination({ ...pagination, skip: Math.max(0, pagination.skip - pagination.limit) })
                 }
               >
-                Anterior
+                Previous
               </Button>
               <Button
                 variant="outline"
@@ -387,7 +387,7 @@ export default function HistoryPage() {
                   setPagination({ ...pagination, skip: pagination.skip + pagination.limit })
                 }
               >
-                Siguiente
+                Next
               </Button>
             </div>
           </div>
@@ -409,7 +409,7 @@ export default function HistoryPage() {
             </button>
 
             <div className="absolute -top-12 left-0 text-white font-mono text-sm space-y-1">
-              <p className="text-zinc-400">Registro #{selectedImage.id}</p>
+              <p className="text-zinc-400">Record #{selectedImage.id}</p>
               <p className="text-zinc-500 text-xs">{selectedImage.filename}</p>
             </div>
 
@@ -426,7 +426,7 @@ export default function HistoryPage() {
                     goToPrevImage();
                   }}
                   className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/70 text-white hover:text-apple-green hover:bg-black/90 transition-colors"
-                  aria-label="Imagen anterior"
+                  aria-label="Previous image"
                 >
                   <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
@@ -447,7 +447,7 @@ export default function HistoryPage() {
                     goToNextImage();
                   }}
                   className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/70 text-white hover:text-apple-green hover:bg-black/90 transition-colors"
-                  aria-label="Imagen siguiente"
+                  aria-label="Next image"
                 >
                   <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
@@ -479,7 +479,7 @@ export default function HistoryPage() {
                         ? 'border-apple-green shadow-[0_0_10px_rgba(57,255,20,0.35)]'
                         : 'border-zinc-700 hover:border-zinc-500'
                     }`}
-                    aria-label={`Ir a imagen ${index + 1}`}
+                    aria-label={`Go to image ${index + 1}`}
                   >
                     {imageUrls[record.id] ? (
                       <img
@@ -508,13 +508,13 @@ export default function HistoryPage() {
             <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" onClick={(e) => e.stopPropagation()}>
               <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
                 <div className="text-center">
-                  <p className="text-xs text-zinc-500 mb-1">Sanas</p>
+                  <p className="text-xs text-zinc-500 mb-1">Healthy</p>
                   <p className="text-2xl font-bold text-apple-green">{selectedImage.healthy_count || 0}</p>
                 </div>
               </Card>
               <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
                 <div className="text-center">
-                  <p className="text-xs text-zinc-500 mb-1">Dañadas</p>
+                  <p className="text-xs text-zinc-500 mb-1">Damaged</p>
                   <p className="text-2xl font-bold text-apple-red">{selectedImage.damaged_count || 0}</p>
                 </div>
               </Card>
@@ -526,7 +526,7 @@ export default function HistoryPage() {
               </Card>
               <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
                 <div className="text-center">
-                  <p className="text-xs text-zinc-500 mb-1">Índice Salud</p>
+                  <p className="text-xs text-zinc-500 mb-1">Health Index</p>
                   <p className={`text-2xl font-bold ${
                     selectedImage.health_index >= 80 ? 'text-apple-green' :
                     selectedImage.health_index >= 50 ? 'text-yellow-500' : 'text-red-500'

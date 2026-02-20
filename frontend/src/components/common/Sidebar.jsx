@@ -17,18 +17,18 @@ export function Sidebar() {
 
   const allNavItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: Zap, label: 'Estimador AI', path: '/estimator' },
-    { icon: Trees, label: 'Mis Huertos', path: '/farming' },
+    { icon: Zap, label: 'AI Estimator', path: '/estimator' },
+    { icon: Trees, label: 'My Orchards', path: '/farming' },
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
-    { icon: History, label: 'Historial', path: '/history' },
-    { icon: User, label: 'Mi Perfil', path: '/profile' },
+    { icon: History, label: 'History', path: '/history' },
+    { icon: User, label: 'My Profile', path: '/profile' },
     // Admin-only item
-    ...(user?.role === 'admin' ? [{ icon: Shield, label: 'Usuarios', path: '/users' }] : []),
+    ...(user?.role === 'admin' ? [{ icon: Shield, label: 'Users', path: '/users' }] : []),
   ];
 
   // Filter items for guest mode
   const navItems = isGuest
-    ? allNavItems.filter(item => item.label === 'Estimador AI')
+    ? allNavItems.filter(item => item.label === 'AI Estimator')
     : allNavItems;
 
   return (
@@ -60,7 +60,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer del Sidebar */}
+      {/* Sidebar Footer */}
       <div className="hidden lg:block p-4 border-t border-zinc-800">
         <div className="bg-zinc-900/50 rounded p-3 text-xs text-zinc-500 font-mono text-center">
           v1.0.0 Stable

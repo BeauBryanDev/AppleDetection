@@ -50,7 +50,7 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <div className="text-right hidden md:block">
-            <p className="text-sm font-bold text-white leading-none">{user?.name || 'Invitado'}</p>
+            <p className="text-sm font-bold text-white leading-none">{user?.name || 'Guest'}</p>
             <p className="text-xs text-zinc-500 font-mono mt-1 uppercase">{user?.role || 'GUEST'}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -58,7 +58,7 @@ export function Header() {
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
-                  alt="Foto de perfil"
+                  alt="Profile picture"
                   className="w-full h-full object-cover"
                   onError={() => setAvatarUrl(null)}
                 />
@@ -75,7 +75,7 @@ export function Header() {
           </div>
         </div>
 
-        <Button variant="ghost" onClick={logout} className="ml-1 sm:ml-2 px-2 sm:px-4" title="Cerrar Sesión">
+        <Button variant="ghost" onClick={logout} className="ml-1 sm:ml-2 px-2 sm:px-4" title="Sign Out">
           <LogOut className="w-5 h-5" />
         </Button>
       </div>

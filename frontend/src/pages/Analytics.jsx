@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="w-12 h-12 border-4 border-apple-green/30 border-t-apple-green rounded-full animate-spin mb-4"></div>
-        <p className="text-zinc-500 font-mono animate-pulse">Analizando datos...</p>
+        <p className="text-zinc-500 font-mono animate-pulse">Analyzing data...</p>
       </div>
     );
   }
@@ -123,21 +123,21 @@ export default function AnalyticsPage() {
   const totalDamaged = (globalStats.total_apples_detected || 0) - totalHealthy;
 
   const globalAppleData = [
-    { name: 'Sanas', value: Math.round(totalHealthy), color: COLORS.healthy },
-    { name: 'Dañadas', value: Math.round(totalDamaged), color: COLORS.damaged }
+    { name: 'Healthy', value: Math.round(totalHealthy), color: COLORS.healthy },
+    { name: 'Damaged', value: Math.round(totalDamaged), color: COLORS.damaged }
   ];
 
   // Prepare data for orchard comparison bar chart
   const orchardComparisonData = userSummary?.orchards?.map(o => ({
     name: o.orchard_name.length > 15 ? o.orchard_name.substring(0, 15) + '...' : o.orchard_name,
-    Manzanas: o.apples_detected,
-    Salud: o.avg_health
+    Apples: o.apples_detected,
+    Health: o.avg_health
   })) || [];
 
   // Prepare health trend data for line chart
   const trendChartData = healthTrend?.trend?.map(point => ({
-    fecha: new Date(point.timestamp).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
-    'Índice de Salud': point.health_index
+    date: new Date(point.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    'Health Index': point.health_index
   })) || [];
 
   // Progress bar component
@@ -192,7 +192,7 @@ export default function AnalyticsPage() {
             Analytics Dashboard
           </h1>
           <p className="text-zinc-500 text-sm font-mono">
-            Usuario: {userSummary?.user_name} | Rol: {userSummary?.user_role}
+            User: {userSummary?.user_name} | Role: {userSummary?.user_role}
           </p>
         </div>
       </div>
@@ -201,14 +201,14 @@ export default function AnalyticsPage() {
       <div>
         <h2 className="text-white font-bold mb-4 flex items-center gap-2">
           <Activity className="w-5 h-5 text-apple-green" />
-          Resumen Global
+          Global Summary
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <Card className="border-zinc-800 bg-black/40 hover:bg-zinc-900/40 transition-colors">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[11px] text-zinc-500 font-mono uppercase tracking-widest mb-1">
-                  Huertos Totales
+                  Total Orchards
                 </p>
                 <h3 className="text-2xl font-bold text-white">{globalStats.total_orchards || 0}</h3>
               </div>
@@ -222,7 +222,7 @@ export default function AnalyticsPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[11px] text-zinc-500 font-mono uppercase tracking-widest mb-1">
-                  Árboles Totales
+                  Total Trees
                 </p>
                 <h3 className="text-2xl font-bold text-white">{globalStats.total_trees || 0}</h3>
               </div>
@@ -236,7 +236,7 @@ export default function AnalyticsPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[11px] text-zinc-500 font-mono uppercase tracking-widest mb-1">
-                  Imágenes Procesadas
+                  Processed Images
                 </p>
                 <h3 className="text-2xl font-bold text-white">{globalStats.total_images_processed || 0}</h3>
               </div>
@@ -250,7 +250,7 @@ export default function AnalyticsPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[11px] text-zinc-500 font-mono uppercase tracking-widest mb-1">
-                  Manzanas Detectadas
+                  Apples Detectadas
                 </p>
                 <h3 className="text-2xl font-bold text-white">{globalStats.total_apples_detected || 0}</h3>
               </div>
@@ -268,7 +268,7 @@ export default function AnalyticsPage() {
         <Card className="p-4 sm:p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <PieChartIcon className="w-5 h-5 text-apple-green" />
-            Distribución Global de Manzanas
+            Global Apple Distribution
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -291,11 +291,11 @@ export default function AnalyticsPage() {
           </ResponsiveContainer>
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div className="text-center p-3 bg-apple-green/10 rounded-lg border border-apple-green/30">
-              <p className="text-xs text-zinc-400 mb-1">Sanas</p>
+              <p className="text-xs text-zinc-400 mb-1">Healthy</p>
               <p className="text-2xl font-bold text-apple-green">{Math.round(totalHealthy)}</p>
             </div>
             <div className="text-center p-3 bg-apple-red/10 rounded-lg border border-apple-red/30">
-              <p className="text-xs text-zinc-400 mb-1">Dañadas</p>
+              <p className="text-xs text-zinc-400 mb-1">Damaged</p>
               <p className="text-2xl font-bold text-apple-red">{Math.round(totalDamaged)}</p>
             </div>
           </div>
@@ -305,7 +305,7 @@ export default function AnalyticsPage() {
         <Card className="p-4 sm:p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-apple-green" />
-            Comparación por Huerto
+            Comparison by Orchard
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={orchardComparisonData}>
@@ -320,7 +320,7 @@ export default function AnalyticsPage() {
               />
               <YAxis stroke="#666" tick={{ fill: '#999' }} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="Manzanas" fill={COLORS.total} radius={[8, 8, 0, 0]} />
+              <Bar dataKey="Apples" fill={COLORS.total} radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -330,7 +330,7 @@ export default function AnalyticsPage() {
       <Card className="p-6 border-zinc-800 bg-cyber-dark">
         <h3 className="text-white font-bold mb-6 flex items-center gap-2">
           <Trees className="w-5 h-5 text-apple-green" />
-          Métricas por Huerto
+          Metrics by Orchard
         </h3>
         <div className="space-y-5 sm:space-y-6">
           {userSummary?.orchards?.map((orchard) => (
@@ -343,19 +343,19 @@ export default function AnalyticsPage() {
               </div>
               <div className="space-y-3">
                 <ProgressBar
-                  label="Árboles"
+                  label="Trees"
                   value={orchard.n_trees}
                   max={Math.max(...(userSummary.orchards.map(o => o.n_trees)), 10)}
                   color="bg-blue-500"
                 />
                 <ProgressBar
-                  label="Manzanas Detectadas"
+                  label="Apples Detectadas"
                   value={orchard.apples_detected}
                   max={Math.max(...(userSummary.orchards.map(o => o.apples_detected)), 10)}
                   color="bg-apple-green"
                 />
                 <ProgressBar
-                  label="Índice de Salud"
+                  label="Health Index"
                   value={orchard.avg_health}
                   max={100}
                   color={orchard.avg_health >= 80 ? 'bg-apple-green' : orchard.avg_health >= 50 ? 'bg-yellow-500' : 'bg-apple-red'}
@@ -375,7 +375,7 @@ export default function AnalyticsPage() {
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
               <h2 className="text-white font-bold flex items-center gap-2 break-words">
                 <LineChartIcon className="w-5 h-5 text-apple-green" />
-                Tendencia de Salud - {selectedOrchard.name}
+                Health Trend - {selectedOrchard.name}
               </h2>
               {/* Orchard Selector */}
               <div className="relative">
@@ -418,7 +418,7 @@ export default function AnalyticsPage() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
                   <XAxis
-                    dataKey="fecha"
+                    dataKey="date"
                     stroke="#666"
                     tick={{ fill: '#999', fontSize: 11 }}
                   />
@@ -430,7 +430,7 @@ export default function AnalyticsPage() {
                   <Tooltip content={<CustomTooltip />} />
                   <Area
                     type="monotone"
-                    dataKey="Índice de Salud"
+                    dataKey="Health Index"
                     stroke={COLORS.healthy}
                     strokeWidth={3}
                     fillOpacity={1}
@@ -445,7 +445,7 @@ export default function AnalyticsPage() {
           <div>
             <h2 className="text-white font-bold mb-4 flex items-center gap-2">
               <Sprout className="w-5 h-5 text-apple-green" />
-              Análisis por Árbol
+              Tree Analysis
             </h2>
 
             <Card className="p-4 border-zinc-800 bg-cyber-dark max-h-[500px] overflow-y-auto custom-scrollbar">
@@ -458,7 +458,7 @@ export default function AnalyticsPage() {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="text-white font-medium">#{tree.tree_code}</h4>
-                        <p className="text-xs text-zinc-500">{tree.tree_type || 'Sin tipo'}</p>
+                        <p className="text-xs text-zinc-500">{tree.tree_type || 'No type'}</p>
                       </div>
                       <span
                         className={`px-2 py-1 rounded text-xs font-bold ${
@@ -474,13 +474,13 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="space-y-2">
                       <ProgressBar
-                        label="Imágenes"
+                        label="Images"
                         value={tree.total_images}
                         max={Math.max(...(treesSummary.trees.map(t => t.total_images)), 5)}
                         color="bg-purple-500"
                       />
                       <ProgressBar
-                        label="Manzanas"
+                        label="Apples"
                         value={tree.total_apples_detected}
                         max={Math.max(...(treesSummary.trees.map(t => t.total_apples_detected)), 10)}
                         color="bg-apple-green"
@@ -489,7 +489,7 @@ export default function AnalyticsPage() {
                   </div>
                 ))}
                 {(!treesSummary?.trees || treesSummary.trees.length === 0) && (
-                  <p className="text-center text-zinc-600 py-8">No hay datos de árboles</p>
+                  <p className="text-center text-zinc-600 py-8">No tree data available</p>
                 )}
               </div>
             </Card>
@@ -499,14 +499,14 @@ export default function AnalyticsPage() {
           <div>
             <h2 className="text-white font-bold mb-4 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-apple-green" />
-              Salud Promedio por Árbol
+              Average Health by Tree
             </h2>
             <Card className="p-4 sm:p-6 border-zinc-800 bg-gradient-to-br from-zinc-900/90 to-black">
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart
                   data={treesSummary?.trees?.slice(0, 8).map(t => ({
                     name: `#${t.tree_code}`,
-                    Salud: t.avg_health_index
+                    Health: t.avg_health_index
                   })) || []}
                   layout="vertical"
                 >
@@ -514,7 +514,7 @@ export default function AnalyticsPage() {
                   <XAxis type="number" domain={[0, 100]} stroke="#666" tick={{ fill: '#999' }} />
                   <YAxis dataKey="name" type="category" stroke="#666" tick={{ fill: '#999', fontSize: 11 }} width={60} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="Salud" fill={COLORS.healthy} radius={[0, 8, 8, 0]} />
+                  <Bar dataKey="Health" fill={COLORS.healthy} radius={[0, 8, 8, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>

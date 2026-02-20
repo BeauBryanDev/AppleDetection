@@ -59,7 +59,7 @@ export default function ProfilePage() {
             }
         } catch (err) {
             console.error('Error loading profile:', err);
-            setError('Error al cargar el perfil');
+            setError('Error loading profile');
         } finally {
             setLoading(false);
         }
@@ -90,7 +90,7 @@ export default function ProfilePage() {
 
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
-            setError('Image Format not allowed. Use JPG, PNG o WEBP.');
+            setError('Image format not allowed. Use JPG, PNG, or WEBP.');
             return;
         }
 
@@ -194,7 +194,7 @@ export default function ProfilePage() {
     if (!profileData) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <p className="text-zinc-500">Profile cannot be load</p>
+                <p className="text-zinc-500">Profile could not be loaded</p>
             </div>
         );
     }
@@ -206,7 +206,7 @@ export default function ProfilePage() {
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 flex items-center gap-2 sm:gap-3">
                         <User className="w-6 h-6 sm:w-8 sm:h-8 text-apple-green" />
-                        Mi Perfil
+                        My Profile
                     </h1>
                     <p className="text-zinc-500 text-sm font-mono">Edit my Account</p>
                 </div>
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                 <Card className="border-apple-green/30 bg-apple-green/10">
                     <div className="flex items-center gap-3 text-apple-green">
                         <CheckCircle className="w-5 h-5" />
-                        <p className="font-medium">Profile has been Sucessfully Updated</p>
+                        <p className="font-medium">Profile has been successfully updated</p>
                     </div>
                 </Card>
             )}
@@ -253,7 +253,7 @@ export default function ProfilePage() {
                                     ) : avatarUrl ? (
                                         <img
                                             src={avatarUrl}
-                                            alt="Foto de perfil"
+                                            alt="Profile picture"
                                             className="w-full h-full object-cover"
                                             onError={() => setAvatarUrl(null)}
                                         />
@@ -281,9 +281,9 @@ export default function ProfilePage() {
                                     className="mt-2 flex items-center gap-1 text-xs text-apple-green hover:text-apple-green/80 transition-colors disabled:opacity-50"
                                 >
                                     <Upload className="w-3 h-3" />
-                                    {uploadingAvatar ? 'Subiendo...' : 'Cambiar foto de perfil'}
+                                    {uploadingAvatar ? 'Uploading...' : 'Change profile picture'}
                                 </button>
-                                <p className="text-xs text-zinc-600 mt-1">JPG, PNG o WEBP. Max 5MB.</p>
+                                <p className="text-xs text-zinc-600 mt-1">JPG, PNG, or WEBP. Max 5MB.</p>
                             </div>
                         </div>
 
@@ -340,7 +340,7 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="pt-4 border-t border-zinc-800">
-                                    <h4 className="text-white font-medium mb-3">Change Password(Opcional)</h4>
+                                    <h4 className="text-white font-medium mb-3">Change Password (Optional)</h4>
                                     <div className="space-y-3">
                                         <div>
                                             <Label htmlFor="password">New Password</Label>
@@ -349,7 +349,7 @@ export default function ProfilePage() {
                                                 type="password"
                                                 value={formData.password}
                                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                placeholder="Let it Empty"
+                                                placeholder="Leave empty"
                                             />
                                         </div>
                                         <div>
@@ -397,7 +397,7 @@ export default function ProfilePage() {
                                     <Phone className="w-5 h-5 text-zinc-500 mt-0.5" />
                                     <div className="flex-1">
                                         <p className="text-xs text-zinc-500 font-mono uppercase">Phone Number</p>
-                                        <p className="text-white font-medium">{profileData.phone_number || 'No especificado'}</p>
+                                        <p className="text-white font-medium">{profileData.phone_number || 'Not specified'}</p>
                                     </div>
                                 </div>
 
@@ -419,7 +419,7 @@ export default function ProfilePage() {
                     </Card>
                 </div>
 
-                {/* Role & Stats Card */}
+                {/* Rolee & Stats Card */}
                 <div className="space-y-6">
                     <Card className="border-zinc-800 bg-gradient-to-br from-zinc-900 to-black">
                         <div className="text-center">
@@ -431,10 +431,10 @@ export default function ProfilePage() {
                                     <Shield className={`w-6 h-6 ${profileData.role === 'admin' ? 'text-purple-500' : 'text-apple-green'}`} />
                                 </div>
                             </div>
-                            <p className="text-xs text-zinc-500 font-mono uppercase mb-1">Rol</p>
+                            <p className="text-xs text-zinc-500 font-mono uppercase mb-1">Role</p>
                             <h3 className={`text-xl font-bold ${profileData.role === 'admin' ? 'text-purple-500' : 'text-apple-green'}`}>
-                                {profileData.role === 'admin' ? 'Administrador' :
-                                    profileData.role === 'farmer' ? 'Agricultor' : 'Invitado'}
+                                {profileData.role === 'admin' ? 'Administrator' :
+                                    profileData.role === 'farmer' ? 'Farmer' : 'Guest'}
                             </h3>
                         </div>
                     </Card>

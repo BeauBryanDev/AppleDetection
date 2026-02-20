@@ -3,7 +3,7 @@ import { loginRequest, verifyTokenRequest, checkEmailExists } from '../api/auth'
 
 const AuthContext = createContext();
 
-// Hook personalizado para usar el contexto fácil
+// Custom hook for easy context usage
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used within an AuthProvider");
@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
 
-  // Función de Login
+  // Login function
   const signin = async (email, password) => {
     try {
       // First check if email exists
@@ -30,12 +30,12 @@ export const AuthProvider = ({ children }) => {
 
       // If email exists, attempt login
       const res = await loginRequest(email, password);
-      // Guardamos el token
+      // Store token
       localStorage.setItem('token', res.data.access_token);
       setIsAuthenticated(true);
       setIsGuest(false);
 
-      // Obtenemos los datos del usuario inmediatamente
+      // Fetch user data immediately
       const userRes = await verifyTokenRequest();
       setUser(userRes.data);
       setErrors([]);
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     setIsGuest(false);
   };
 
-  // Efecto: Verificar si ya existe un token al recargar la página
+  // Effect: verify if token exists when page reloads
   useEffect(() => {
     async function checkLogin() {
       const token = localStorage.getItem('token');
