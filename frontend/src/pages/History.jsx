@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import {
@@ -10,7 +10,9 @@ import {
   Calendar,
   Image as ImageIcon,
   X,
-  ZoomIn
+  ZoomIn,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { getAllEstimatesRequest, deleteEstimateRequest } from '../api/history';
 
@@ -20,7 +22,9 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [pagination, setPagination] = useState({ skip: 0, limit: 50 });
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const thumbnailRefs = useRef({});
 
   useEffect(() => {
     loadHistory();
@@ -68,6 +72,93 @@ export default function HistoryPage() {
     record.filename?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     record.id?.toString().includes(searchTerm)
   );
+
+  const selectedImage =
+    selectedImageIndex !== null ? filteredRecords[selectedImageIndex] : null;
+
+  const closeModal = () => {
+    setSelectedImageIndex(null);
+    setTouchStartX(null);
+  };
+
+  const openImageModal = (index) => {
+    setSelectedImageIndex(index);
+    const record = filteredRecords[index];
+    if (record?.id) getImageUrl(record.id);
+  };
+
+  const goToPrevImage = () => {
+    if (!filteredRecords.length || selectedImageIndex === null) return;
+    const nextIndex =
+      (selectedImageIndex - 1 + filteredRecords.length) % filteredRecords.length;
+    setSelectedImageIndex(nextIndex);
+  };
+
+  const goToNextImage = () => {
+    if (!filteredRecords.length || selectedImageIndex === null) return;
+    const nextIndex = (selectedImageIndex + 1) % filteredRecords.length;
+    setSelectedImageIndex(nextIndex);
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.changedTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    if (deltaX > 50) goToPrevImage();
+    if (deltaX < -50) goToNextImage();
+    setTouchStartX(null);
+  };
+
+  useEffect(() => {
+    if (selectedImageIndex === null) return;
+    if (selectedImageIndex >= filteredRecords.length) {
+      closeModal();
+      return;
+    }
+
+    const current = filteredRecords[selectedImageIndex];
+    if (current?.id) getImageUrl(current.id);
+
+    if (filteredRecords.length > 1) {
+      const prevIndex =
+        (selectedImageIndex - 1 + filteredRecords.length) % filteredRecords.length;
+      const nextIndex = (selectedImageIndex + 1) % filteredRecords.length;
+      const prev = filteredRecords[prevIndex];
+      const next = filteredRecords[nextIndex];
+      if (prev?.id) getImageUrl(prev.id);
+      if (next?.id) getImageUrl(next.id);
+    }
+  }, [selectedImageIndex, filteredRecords.length]);
+
+  useEffect(() => {
+    if (selectedImageIndex === null) return;
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowLeft') goToPrevImage();
+      if (e.key === 'ArrowRight') goToNextImage();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedImageIndex, filteredRecords.length]);
+
+  useEffect(() => {
+    if (selectedImageIndex === null) return;
+    const selectedRecord = filteredRecords[selectedImageIndex];
+    if (!selectedRecord) return;
+    const node = thumbnailRefs.current[selectedRecord.id];
+    if (node?.scrollIntoView) {
+      node.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+    }
+  }, [selectedImageIndex, filteredRecords]);
 
   if (loading) {
     return (
@@ -179,7 +270,7 @@ export default function HistoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
-              {filteredRecords.map((record) => (
+              {filteredRecords.map((record, index) => (
                 <tr key={record.id} className="hover:bg-zinc-800/30 transition-colors">
                   <td className="px-4 sm:px-6 py-4">
                     <span className="text-white font-mono">#{record.id}</span>
@@ -191,10 +282,7 @@ export default function HistoryPage() {
                           src={imageUrls[record.id] || ''}
                           alt={record.filename}
                           className="w-16 h-16 object-cover rounded-lg border-2 border-zinc-700 hover:border-apple-green cursor-pointer transition-all hover:shadow-lg hover:shadow-apple-green/20 hover:scale-105"
-                          onClick={() => {
-                            setSelectedImage(record);
-                            getImageUrl(record.id);
-                          }}
+                          onClick={() => openImageModal(index)}
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64"%3E%3Crect fill="%23333" width="64" height="64"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23666"%3E?%3C/text%3E%3C/svg%3E';
@@ -310,11 +398,11 @@ export default function HistoryPage() {
       {selectedImage && (
         <div
           className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
-          onClick={() => setSelectedImage(null)}
+          onClick={closeModal}
         >
-          <div className="relative max-w-6xl w-full max-h-[90vh] animate-in zoom-in-95 duration-200">
+          <div className="relative max-w-4xl w-full max-h-[90vh] animate-in zoom-in-95 duration-200">
             <button
-              onClick={() => setSelectedImage(null)}
+              onClick={closeModal}
               className="absolute -top-12 right-0 p-2 text-white hover:text-apple-green transition-colors rounded-full hover:bg-zinc-800/50"
             >
               <X className="w-8 h-8" />
@@ -325,14 +413,97 @@ export default function HistoryPage() {
               <p className="text-zinc-500 text-xs">{selectedImage.filename}</p>
             </div>
 
-            <div className="bg-black rounded-lg overflow-hidden border-2 border-apple-green/30 shadow-2xl shadow-apple-green/10">
+            <div
+              className="relative bg-black rounded-lg overflow-hidden border-2 border-apple-green/30 shadow-2xl shadow-apple-green/10"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              {filteredRecords.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToPrevImage();
+                  }}
+                  className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/70 text-white hover:text-apple-green hover:bg-black/90 transition-colors"
+                  aria-label="Imagen anterior"
+                >
+                  <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
+              )}
+
               <img
                 src={imageUrls[selectedImage.id] || ''}
                 alt={selectedImage.filename}
-                className="w-full h-auto max-h-[85vh] object-contain"
+                className="w-full h-auto max-h-[62vh] object-contain"
                 onClick={(e) => e.stopPropagation()}
               />
+
+              {filteredRecords.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToNextImage();
+                  }}
+                  className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/70 text-white hover:text-apple-green hover:bg-black/90 transition-colors"
+                  aria-label="Imagen siguiente"
+                >
+                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
+              )}
             </div>
+
+            <div className="mt-2 text-center text-xs font-mono text-zinc-500">
+              {selectedImageIndex + 1} / {filteredRecords.length}
+            </div>
+
+            {filteredRecords.length > 1 && (
+              <div
+                className="mt-3 flex gap-2 overflow-x-auto pb-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {filteredRecords.map((record, index) => (
+                  <button
+                    key={`thumb-${record.id}`}
+                    type="button"
+                    ref={(el) => {
+                      if (el) thumbnailRefs.current[record.id] = el;
+                    }}
+                    onClick={() => openImageModal(index)}
+                    onMouseEnter={() => {
+                      if (!imageUrls[record.id]) getImageUrl(record.id);
+                    }}
+                    className={`relative flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-md overflow-hidden border-2 transition-all ${
+                      selectedImageIndex === index
+                        ? 'border-apple-green shadow-[0_0_10px_rgba(57,255,20,0.35)]'
+                        : 'border-zinc-700 hover:border-zinc-500'
+                    }`}
+                    aria-label={`Ir a imagen ${index + 1}`}
+                  >
+                    {imageUrls[record.id] ? (
+                      <img
+                        src={imageUrls[record.id]}
+                        alt={record.filename || `thumbnail-${record.id}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64"%3E%3Crect fill="%23333" width="64" height="64"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23666"%3E?%3C/text%3E%3C/svg%3E';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+                        <ImageIcon className="w-4 h-4 text-zinc-600" />
+                      </div>
+                    )}
+                    <span className="absolute bottom-0 right-0 text-[10px] font-mono bg-black/70 text-zinc-200 px-1 rounded-tl">
+                      {index + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" onClick={(e) => e.stopPropagation()}>
               <Card className="bg-black/60 border-zinc-800 backdrop-blur-sm">
