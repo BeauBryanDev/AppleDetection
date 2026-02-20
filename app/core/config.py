@@ -1,6 +1,6 @@
 from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, field_validator, validator
+from pydantic import Field, field_validator
 import os
 from pathlib import Path
 
@@ -11,39 +11,26 @@ class Settings(BaseSettings):
     
     Priority: Env vars > .env file > default values
     """
-    model_config = SettingsConfigDict(
-        env_file='.env',
-        env_ignore_empty=True,
-        extra='ignore'
-    )
     
     # Application metadata
-    
     APP_NAME: str = "Apple Yield Estimator API"
     APP_VERSION: str = "2.0.0"
     APP_DESCRIPTION: str = "API For Apple Estimator using YOLOv8"
     
-    DEBUG: bool = Field(default=False, env="DEBUG")
-    LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
+    DEBUG: bool = Field(default=False, json_schema_extra={"env": "DEBUG"})
+    LOG_LEVEL: str = Field(default="INFO", json_schema_extra={"env": "LOG_LEVEL"})
     
     # SERVER Configuration - Uvicorn/Gunicorn
-    
-    HOST: str = Field(default="0.0.0.0", env="HOST")
-    PORT: int = Field(default=8000, env="PORT")
-    WORKERS: int = Field(default=1, env="WORKERS")
+    HOST: str = Field(default="0.0.0.0", json_schema_extra={"env": "HOST"})
+    PORT: int = Field(default=8000, json_schema_extra={"env": "PORT"})
+    WORKERS: int = Field(default=1, json_schema_extra={"env": "WORKERS"})
     
     # Security and JWT
-    
-    # SECRET_KEY: CRÍTICO -  .env
-    SECRET_KEY: str = Field(..., env="SECRET_KEY")
-    
-    # Algoritmo de encriptación JWT
-    ALGORITHM: str = Field(default="HS256", env="ALGORITHM")
-    
-    # JWT Expiratio ntime /minutes/
+    SECRET_KEY: str = Field(..., json_schema_extra={"env": "SECRET_KEY"})
+    ALGORITHM: str = Field(default="HS256", json_schema_extra={"env": "ALGORITHM"})
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         default=30, 
-        env="ACCESS_TOKEN_EXPIRE_MINUTES"
+        json_schema_extra={"env": "ACCESS_TOKEN_EXPIRE_MINUTES"}
     )
     
     @field_validator("SECRET_KEY")
@@ -68,7 +55,6 @@ class Settings(BaseSettings):
     # ============================================
     # CORS
     # ============================================
-    
     BACKEND_CORS_ORIGINS: List[str] = Field(
         default=[
             "http://localhost:3000",     # React dev
@@ -77,26 +63,23 @@ class Settings(BaseSettings):
             "http://127.0.0.1:3000",
             "http://127.0.0.1:5173",
         ],
-        env="BACKEND_CORS_ORIGINS"
+        json_schema_extra={"env": "BACKEND_CORS_ORIGINS"}
     )
     
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v):
-        """Comman Sperate String -> List"""
+        """Comma Separate String -> List"""
         if isinstance(v, str):
-            
             return [origin.strip() for origin in v.split(",")]
-        
         return v
 
     # DATABASE (PostgreSQL)
-
-    POSTGRES_SERVER: str = Field(default="localhost", env="POSTGRES_SERVER")
-    POSTGRES_USER: str = Field(default="postgres", env="POSTGRES_USER")
-    POSTGRES_PASSWORD: str = Field(default="postgres", env="POSTGRES_PASSWORD")
-    POSTGRES_DB: str = Field(default="yield_estimator", env="POSTGRES_DB")
-    POSTGRES_PORT: int = Field(default=5432, env="POSTGRES_PORT")
+    POSTGRES_SERVER: str = Field(default="localhost", json_schema_extra={"env": "POSTGRES_SERVER"})
+    POSTGRES_USER: str = Field(default="postgres", json_schema_extra={"env": "POSTGRES_USER"})
+    POSTGRES_PASSWORD: str = Field(default="postgres", json_schema_extra={"env": "POSTGRES_PASSWORD"})
+    POSTGRES_DB: str = Field(default="yield_estimator", json_schema_extra={"env": "POSTGRES_DB"})
+    POSTGRES_PORT: int = Field(default=5432, json_schema_extra={"env": "POSTGRES_PORT"})
     
     # Auto-generated DB URI (PostgreSQL)
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
@@ -120,91 +103,77 @@ class Settings(BaseSettings):
         )
     
     # DB CONNECTION POOL
-    DB_POOL_SIZE: int = Field(default=5, env="DB_POOL_SIZE")
-    DB_MAX_OVERFLOW: int = Field(default=10, env="DB_MAX_OVERFLOW")
-    DB_POOL_TIMEOUT: int = Field(default=30, env="DB_POOL_TIMEOUT")
+    DB_POOL_SIZE: int = Field(default=5, json_schema_extra={"env": "DB_POOL_SIZE"})
+    DB_MAX_OVERFLOW: int = Field(default=10, json_schema_extra={"env": "DB_MAX_OVERFLOW"})
+    DB_POOL_TIMEOUT: int = Field(default=30, json_schema_extra={"env": "DB_POOL_TIMEOUT"})
     
-
     # ML Model configuration
     MODEL_PATH: str = Field(
         default="app/models/weights/best_model.onnx",
-        env="MODEL_PATH"
+        json_schema_extra={"env": "MODEL_PATH"}
     )
     
     MODEL_VERSION: str = Field(
         default="YOLOv8s-Cyberpunk-v1",
-        env="MODEL_VERSION"
+        json_schema_extra={"env": "MODEL_VERSION"}
     )
     
-    MODEL_INPUT_SIZE: int = Field(default=640, env="MODEL_INPUT_SIZE")
+    MODEL_INPUT_SIZE: int = Field(default=640, json_schema_extra={"env": "MODEL_INPUT_SIZE"})
     
     CONFIDENCE_THRESHOLD: float = Field(
         default=0.45, 
-        env="CONFIDENCE_THRESHOLD"
+        json_schema_extra={"env": "CONFIDENCE_THRESHOLD"}
     )
     
-    NMS_THRESHOLD: float = Field(default=0.45, env="NMS_THRESHOLD")
+    NMS_THRESHOLD: float = Field(default=0.45, json_schema_extra={"env": "NMS_THRESHOLD"})
     
-    # Model Classes,  Now they are three (apple, damaged_apple)
+    # Model Classes, Now they are three (apple, damaged_apple)
     MODEL_CLASSES: List[str] = Field(
         default=["apple", "damaged_apple"],
-        env="MODEL_CLASSES"
+        json_schema_extra={"env": "MODEL_CLASSES"}
     )
     
-    MAX_FILE_SIZE_MB: int = Field(default=10, env="MAX_FILE_SIZE_MB")
+    MAX_FILE_SIZE_MB: int = Field(default=10, json_schema_extra={"env": "MAX_FILE_SIZE_MB"})
     
     ALLOWED_IMAGE_FORMATS: List[str] = Field(
         default=["image/jpeg", "image/png", "image/jpg"],
-        env="ALLOWED_IMAGE_FORMATS"
+        json_schema_extra={"env": "ALLOWED_IMAGE_FORMATS"}
     )
     
     # Directorio de uploads
-    UPLOAD_DIR: str = Field(default="uploads", env="UPLOAD_DIR")
+    UPLOAD_DIR: str = Field(default="uploads", json_schema_extra={"env": "UPLOAD_DIR"})
     
-# CACHE FOR REDIT _OPT
+    # CACHE FOR REDIS _OPT
+    REDIS_HOST: str = Field(default="localhost", json_schema_extra={"env": "REDIS_HOST"})
+    REDIS_PORT: int = Field(default=6379, json_schema_extra={"env": "REDIS_PORT"})
+    REDIS_DB: int = Field(default=0, json_schema_extra={"env": "REDIS_DB"})
+    REDIS_PASSWORD: Optional[str] = Field(default=None, json_schema_extra={"env": "REDIS_PASSWORD"})
     
-    REDIS_HOST: str = Field(default="localhost", env="REDIS_HOST")
-    REDIS_PORT: int = Field(default=6379, env="REDIS_PORT")
-    REDIS_DB: int = Field(default=0, env="REDIS_DB")
-    REDIS_PASSWORD: Optional[str] = Field(default=None, env="REDIS_PASSWORD")
+    CACHE_ENABLED: bool = Field(default=False, json_schema_extra={"env": "CACHE_ENABLED"})
+    CACHE_TTL: int = Field(default=3600, json_schema_extra={"env": "CACHE_TTL"})  # 1 hora
     
-    CACHE_ENABLED: bool = Field(default=False, env="CACHE_ENABLED")
-    CACHE_TTL: int = Field(default=3600, env="CACHE_TTL")  # 1 hora
-    
-
     # STORAGE (S3/Local)
-
-    
-    STORAGE_TYPE: str = Field(default="local", env="STORAGE_TYPE")  # "local" o "s3"
+    STORAGE_TYPE: str = Field(default="local", json_schema_extra={"env": "STORAGE_TYPE"})  # "local" o "s3"
     
     # AWS S3 (si STORAGE_TYPE=s3)
-    AWS_ACCESS_KEY_ID: Optional[str] = Field(default=None, env="AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY: Optional[str] = Field(default=None, env="AWS_SECRET_ACCESS_KEY")
-    AWS_REGION: str = Field(default="us-east-1", env="AWS_REGION")
-    S3_BUCKET_NAME: Optional[str] = Field(default=None, env="S3_BUCKET_NAME")
+    AWS_ACCESS_KEY_ID: Optional[str] = Field(default=None, json_schema_extra={"env": "AWS_ACCESS_KEY_ID"})
+    AWS_SECRET_ACCESS_KEY: Optional[str] = Field(default=None, json_schema_extra={"env": "AWS_SECRET_ACCESS_KEY"})
+    AWS_REGION: str = Field(default="us-east-1", json_schema_extra={"env": "AWS_REGION"})
+    S3_BUCKET_NAME: Optional[str] = Field(default=None, json_schema_extra={"env": "S3_BUCKET_NAME"})
     
-
     # MONITORING
-
+    SENTRY_DSN: Optional[str] = Field(default=None, json_schema_extra={"env": "SENTRY_DSN"})
+    ANALYTICS_ENABLED: bool = Field(default=True, json_schema_extra={"env": "ANALYTICS_ENABLED"})
     
-    SENTRY_DSN: Optional[str] = Field(default=None, env="SENTRY_DSN")
-    ANALYTICS_ENABLED: bool = Field(default=True, env="ANALYTICS_ENABLED")
-    
-
     # RATE LIMITING
+    RATE_LIMIT_ENABLED: bool = Field(default=False, json_schema_extra={"env": "RATE_LIMIT_ENABLED"})
+    RATE_LIMIT_PER_MINUTE: int = Field(default=10, json_schema_extra={"env": "RATE_LIMIT_PER_MINUTE"})
     
-    RATE_LIMIT_ENABLED: bool = Field(default=False, env="RATE_LIMIT_ENABLED")
-    RATE_LIMIT_PER_MINUTE: int = Field(default=10, env="RATE_LIMIT_PER_MINUTE")
-    
-
     # TIMEZONE
+    TIMEZONE: str = Field(default="America/Bogota", json_schema_extra={"env": "TIMEZONE"})
+    TIMEZONE_OFFSET_HOURS: int = Field(default=-5, json_schema_extra={"env": "TIMEZONE_OFFSET_HOURS"})
     
-    TIMEZONE: str = Field(default="America/Bogota", env="TIMEZONE")
-    TIMEZONE_OFFSET_HOURS: int = Field(default=-5, env="TIMEZONE_OFFSET_HOURS")
-    
-
     # PYDANTIC SETTINGS
-
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -212,14 +181,15 @@ class Settings(BaseSettings):
         extra="ignore"  # Ignorar variables extra en .env
     )
 
+
 # Global settings instance
 settings = Settings()
+
 
 # HELPERS 
 
 def get_settings() -> Settings:
     """Returns the global settings instance."""
-
     return settings
 
 
@@ -360,6 +330,3 @@ def get_cors_origins() -> List[str]:
         List[str]: Lista de orígenes
     """
     return settings.BACKEND_CORS_ORIGINS
-
-
-

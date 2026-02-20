@@ -295,3 +295,5 @@ backups/
 rehash_users_passwords.py
 
 s3_estimator.py
+
+r_test_estimator.py

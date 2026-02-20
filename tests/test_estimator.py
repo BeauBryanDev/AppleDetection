@@ -1,17 +1,43 @@
 import pytest
+import os
+import sys
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.db.models.farming import YieldRecord, Image, Prediction, Detection
-from app.db.models.users import User
+from datetime import datetime, timedelta, timezone
 
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app.db.models.farming import YieldRecord, Image, Prediction, Detection
+from app.db.models.users import User, UserRole
 from app.models.inference import AppleInference
 from app.core.config import settings
-from app.db.models.users import UserRole
-from app.core import security
-from datetime import datetime, timedelta, timezone
 import jwt
-import os
+
+
+# Helper to create a JWT token for testing purposes.
+def create_jwt_token(user_id: int, role: UserRole, expires_delta: timedelta = None) -> str:
+    if expires_delta is None:
+        expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + expires_delta
+    to_encode = {"sub": str(user_id), "role": role.value, "exp": expire}
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+
+# Dummy image for testing
+DUMMY_IMAGE = ("test_image.jpg", b"fake_image_bytes", "image/jpeg")
+
+# Mock inference results
+MOCK_INFERENCE_RESULTS = {
+    "counts": {"red_apple": 3, "green_apple": 2, "damaged_apple": 1, "total": 6},
+    "detections": {
+        "boxes": [[10, 10, 50, 50], [60, 60, 100, 100]],
+        "class_ids": [0, 1],  # 0 for apple, 1 for damaged_apple
+        "confidences": [0.9, 0.8]
+    }
+}
 
 
 def test_estimator_upload_no_auth(client):
@@ -43,34 +69,6 @@ def test_estimator_missing_file(client):
     response = client.post("/api/v1/estimator/estimate")
     assert response.status_code == 422  # FastAPI validation error
 
-# Helper to create a JWT token for testing purposes.
-def create_jwt_token(user_id: int, role: UserRole, expires_delta: timedelta = None) -> str:
-    if expires_delta is None:
-        expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    expire = datetime.now(timezone.utc) + expires_delta
-    to_encode = {"sub": str(user_id), "role": role.value, "exp": expire}
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
-
-# Dummy image for testing
-DUMMY_IMAGE = ("test_image.jpg", b"fake_image_bytes", "image/jpeg")
-
-# Mock inference results
-MOCK_INFERENCE_RESULTS = {
-    "counts": {"red_apple": 3, "green_apple": 2, "damaged_apple": 1, "total": 6},
-    "detections": {
-        "boxes": [[10, 10, 50, 50], [60, 60, 100, 100]],
-        "class_ids": [0, 1], # 0 for apple, 1 for damaged_apple
-        "confidences": [0.9, 0.8]
-    }
-}
-
-
-def test_estimator_missing_file(client):
-    response = client.post("/api/v1/estimator/estimate")
-    assert response.status_code == 422  # FastAPI validation error
-
-# --- New Tests for /api/v1/estimator/estimate ---
 
 @patch("app.api.v1.endpoints.estimator.draw_cyberpunk_detections")
 @patch.object(AppleInference, "run_inference")
@@ -102,7 +100,7 @@ def test_estimator_authenticated_preview_mode(
         params={
             "orchard_id": test_orchard.id,
             "tree_id": test_tree.id,
-            "preview": True, # Explicitly set to True for this test
+            "preview": True,  # Explicitly set to True for this test
             "confidence_threshold": 0.6
         },
         files={"file": DUMMY_IMAGE}
@@ -113,13 +111,13 @@ def test_estimator_authenticated_preview_mode(
     assert response.content == b"processed_image_bytes"
 
     # Verify headers
-    assert response.headers["X-Healthy-Count"] == "5" # red_apple + green_apple
+    assert response.headers["X-Healthy-Count"] == "5"  # red_apple + green_apple
     assert response.headers["X-Damaged-Count"] == "1"
     assert response.headers["X-Total-Count"] == "6"
     health_idx = round((5 / 6) * 100, 2)
     assert response.headers["X-Health-Index"] == str(health_idx)
-    assert response.headers["X-Record-ID"] == "None" # Should not be saved
-    assert response.headers["X-Prediction-ID"] == "None" # Should not be saved
+    assert response.headers["X-Record-ID"] == "None"  # Should not be saved
+    assert response.headers["X-Prediction-ID"] == "None"  # Should not be saved
     assert response.headers["X-Preview-Mode"] == "true"
     assert response.headers["X-Mode"] == "authenticated"
     assert response.headers["X-Orchard-ID"] == str(test_orchard.id)
@@ -127,13 +125,13 @@ def test_estimator_authenticated_preview_mode(
 
     # Verify inference and drawing were called
     mock_run_inference.assert_called_once()
-    assert mock_run_inference.call_args[0][0] == DUMMY_IMAGE[1] # raw image bytes
-    assert mock_run_inference.call_args[0][1] == 0.64 * 0.6 # deep_confidence_threshold
+    assert mock_run_inference.call_args[0][0] == DUMMY_IMAGE[1]  # raw image bytes
+    assert mock_run_inference.call_args[0][1] == 0.64 * 0.6  # deep_confidence_threshold
 
     mock_draw_detections.assert_called_once()
-    assert mock_draw_detections.call_args[0][0] == DUMMY_IMAGE[1] # original image bytes
+    assert mock_draw_detections.call_args[0][0] == DUMMY_IMAGE[1]  # original image bytes
     assert mock_draw_detections.call_args[0][1] == MOCK_INFERENCE_RESULTS["detections"]
-    assert mock_draw_detections.call_args[0][2] == 0.85 * 0.6 # drawing threshold
+    assert mock_draw_detections.call_args[0][2] == 0.85 * 0.6  # drawing threshold
 
     # Verify no new entries in the database
     assert db_session.query(YieldRecord).count() == 0
@@ -177,7 +175,7 @@ def test_estimator_authenticated_save_mode(
         params={
             "orchard_id": test_orchard.id,
             "tree_id": test_tree.id,
-            "preview": False, # Set to False for save mode
+            "preview": False,  # Set to False for save mode
             "confidence_threshold": 0.5
         },
         files={"file": DUMMY_IMAGE}
@@ -197,8 +195,8 @@ def test_estimator_authenticated_save_mode(
     assert response.headers["X-Mode"] == "authenticated"
     assert response.headers["X-Orchard-ID"] == str(test_orchard.id)
     assert response.headers["X-Tree-ID"] == str(test_tree.id)
-    assert response.headers["X-Record-ID"] != "None" # Should be saved
-    assert response.headers["X-Prediction-ID"] != "None" # Should be saved
+    assert response.headers["X-Record-ID"] != "None"  # Should be saved
+    assert response.headers["X-Prediction-ID"] != "None"  # Should be saved
 
     # Verify new entries in the database
     assert db_session.query(YieldRecord).count() == 1
@@ -213,13 +211,13 @@ def test_estimator_authenticated_save_mode(
     assert record.damaged_count == 1
     assert record.total_count == 6
     assert record.health_index == health_idx
-    assert os.path.exists("uploads/" + record.filename) # Image should be saved to disk
+    assert os.path.exists("uploads/" + record.filename)  # Image should be saved to disk
 
     image = db_session.query(Image).first()
     assert image.user_id == test_user.id
     assert image.orchard_id == test_orchard.id
     assert image.tree_id == test_tree.id
-    assert image.image_path == "uploads/" + record.filename # Should be the same filename
+    assert image.image_path == "uploads/" + record.filename  # Should be the same filename
 
     prediction = db_session.query(Prediction).first()
     assert prediction.image_id == image.id
@@ -231,8 +229,9 @@ def test_estimator_authenticated_save_mode(
     detections = db_session.query(Detection).all()
     assert len(detections) == 2
     assert detections[0].prediction_id == prediction.id
-    assert detections[0].class_label == "apple" # class_id 0
-    assert detections[1].class_label == "damaged_apple" # class_id 1
+    assert detections[0].class_label == "apple"  # class_id 0
+    assert detections[1].class_label == "damaged_apple"  # class_id 1
+    
     # Clean up the created image file
     os.remove("uploads/" + record.filename)
 
@@ -246,7 +245,7 @@ def test_estimator_auth_missing_orchard_id_param(
     mock_validate_image_file: MagicMock,
     client: TestClient,
     auth_headers: dict,
-    test_tree # tree needs an orchard, but we're testing missing orchard_id param
+    test_tree  # tree needs an orchard, but we're testing missing orchard_id param
 ):
     """
     Tests /api/v1/estimator/estimate for an authenticated user missing orchard_id query parameter
@@ -254,13 +253,13 @@ def test_estimator_auth_missing_orchard_id_param(
     """
     mock_run_inference.return_value = MOCK_INFERENCE_RESULTS
     mock_draw_detections.return_value = b"processed_image_bytes"
-    mock_validate_image_file.return_value = None # Mock this to avoid file validation details
+    mock_validate_image_file.return_value = None  # Mock this to avoid file validation details
 
     response = client.post(
         "/api/v1/estimator/estimate",
         headers=auth_headers,
         params={
-            # "orchard_id": test_orchard.id, # Missing
+            # "orchard_id": test_orchard.id,  # Missing
             "tree_id": test_tree.id,
             "preview": False
         },
@@ -278,7 +277,7 @@ def test_estimator_auth_invalid_orchard_id(
     mock_draw_detections: MagicMock,
     client: TestClient,
     auth_headers: dict,
-    test_tree # just for the tree_id
+    test_tree  # just for the tree_id
 ):
     """
     Tests /api/v1/estimator/estimate for an authenticated user with an invalid (non-existent) orchard_id.
@@ -291,7 +290,7 @@ def test_estimator_auth_invalid_orchard_id(
         "/api/v1/estimator/estimate",
         headers=auth_headers,
         params={
-            "orchard_id": 99999, # Non-existent ID
+            "orchard_id": 99999,  # Non-existent ID
             "tree_id": test_tree.id,
             "preview": False
         },
@@ -300,6 +299,7 @@ def test_estimator_auth_invalid_orchard_id(
     assert response.status_code == 404
     assert "detail" in response.json()
     assert "Orchard 99999 not found" in response.json()["detail"]
+
 
 @patch("app.api.v1.endpoints.estimator.draw_cyberpunk_detections")
 @patch.object(AppleInference, "run_inference")
@@ -322,7 +322,7 @@ def test_estimator_auth_invalid_tree_id(
         headers=auth_headers,
         params={
             "orchard_id": test_orchard.id,
-            "tree_id": 99999, # Non-existent ID
+            "tree_id": 99999,  # Non-existent ID
             "preview": False
         },
         files={"file": DUMMY_IMAGE}
@@ -331,6 +331,7 @@ def test_estimator_auth_invalid_tree_id(
     assert "detail" in response.json()
     assert f"Tree 99999 not found in orchard {test_orchard.id}" in response.json()["detail"]
 
+
 @patch("app.api.v1.endpoints.estimator.draw_cyberpunk_detections")
 @patch.object(AppleInference, "run_inference")
 def test_estimator_auth_unauthorized_orchard(
@@ -338,7 +339,7 @@ def test_estimator_auth_unauthorized_orchard(
     mock_draw_detections: MagicMock,
     client: TestClient,
     auth_headers: dict,
-    other_user_orchard # Orchard owned by a different user
+    other_user_orchard  # Orchard owned by a different user
 ):
     """
     Tests /api/v1/estimator/estimate for an authenticated user trying to access an orchard they don't own.
@@ -535,7 +536,7 @@ def test_get_estimation_history_authenticated_user(client: TestClient, db_sessio
     assert response.status_code == 200
     history = response.json()
     assert len(history) == 2
-    assert history[0]["healthy_count"] == record2.healthy_count # Should be ordered by created_at desc
+    assert history[0]["healthy_count"] == record2.healthy_count  # Should be ordered by created_at desc
     assert history[1]["healthy_count"] == record1.healthy_count
 
 
