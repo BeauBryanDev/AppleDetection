@@ -48,7 +48,7 @@ class UserResponse(UserBase):
     
     id: int
     created_at: datetime
-    avatar_url: Optional[str] = None  
+    avatar_url: Optional[str] = None  # URL de la imagen de perfil
 
     class Config:
         

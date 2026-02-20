@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
-import { loginRequest, verifyTokenRequest } from '../api/auth';
+import { loginRequest, verifyTokenRequest, checkEmailExists } from '../api/auth';
 
 const AuthContext = createContext();
 
@@ -20,6 +20,15 @@ export const AuthProvider = ({ children }) => {
   // Función de Login
   const signin = async (email, password) => {
     try {
+      // First check if email exists
+      const emailCheckRes = await checkEmailExists(email);
+      
+      if (!emailCheckRes.data.exists) {
+        setErrors(["Email is not registered in database"]);
+        return;
+      }
+
+      // If email exists, attempt login
       const res = await loginRequest(email, password);
       // Guardamos el token
       localStorage.setItem('token', res.data.access_token);
@@ -32,7 +41,7 @@ export const AuthProvider = ({ children }) => {
       setErrors([]);
     } catch (error) {
       console.error(error);
-      setErrors([error.response?.data?.detail || "Error al iniciar sesión"]);
+      setErrors([error.response?.data?.detail || "Error during login"]);
     }
   };
 

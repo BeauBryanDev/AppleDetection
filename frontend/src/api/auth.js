@@ -1,5 +1,11 @@
 import client from './axios';
 
+export const checkEmailExists = async (email) => {
+  return client.post('/auth/check-email', null, {
+    params: { email }
+  });
+};
+
 export const loginRequest = async (email, password) => {
   //  OAuth2 data to be sent as :: application/x-www-form-urlencoded
   

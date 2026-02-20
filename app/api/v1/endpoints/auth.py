@@ -12,6 +12,20 @@ from app.core.logging import logger
 
 router = APIRouter()
 
+@router.post("/check-email")
+async def check_email_exists(
+    email: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Check if an email exists in the database.
+    
+    Returns:
+        dict: {"exists": bool}
+    """
+    user = db.query(User).filter(User.email == email).first()
+    return {"exists": user is not None}
+
 @router.post("/login")
 async def login_access_token(
     
@@ -40,7 +54,7 @@ async def login_access_token(
         print(f"DEBUG: User not found with email: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email o contraseña incorrectos",
+            detail="Email is not registered in database",
         )
     # eMAIL Validation 
     # if not EmailStr._validate(form_data.username):
@@ -57,7 +71,7 @@ async def login_access_token(
     if not password_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email or Password Incorrect",
+            detail="Incorrect email or password",
         )
     
     logger.debug(f"Login attempt for email: {form_data.username}")
