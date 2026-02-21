@@ -6,6 +6,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Label } from '../components/ui/Label';
+import { Footer } from '../components/common/Footer';
 import { Sprout, User, Mail, Phone, Lock, CheckCircle } from 'lucide-react';
 import { registerRequest } from '../api/auth';
 
@@ -55,7 +56,8 @@ function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cyber-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-cyber-black to-cyber-black p-4">
+      <div className="min-h-screen flex flex-col bg-cyber-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-cyber-black to-cyber-black">
+        <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md border-t-4 border-t-apple-green shadow-2xl">
           <div className="text-center py-8">
             <div className="flex justify-center mb-4">
@@ -68,12 +70,15 @@ function RegisterPage() {
             <p className="text-sm text-zinc-500 font-mono">Redirecting to login...</p>
           </div>
         </Card>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cyber-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-cyber-black to-cyber-black p-4">
+    <div className="min-h-screen flex flex-col bg-cyber-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-cyber-black to-cyber-black">
+      <div className="flex-1 flex items-center justify-center p-4">
 
       <Card className="w-full max-w-md border-t-4 border-t-apple-green shadow-2xl relative overflow-hidden">
 
@@ -218,11 +223,8 @@ function RegisterPage() {
           </Link>
         </p>
       </Card>
-
-      {/* Minimal footer */}
-      <div className="absolute bottom-4 text-zinc-700 text-xs font-mono">
-        SYSTEM STATUS: <span className="text-apple-green">ONLINE</span>
       </div>
+      <Footer />
     </div>
   );
 }

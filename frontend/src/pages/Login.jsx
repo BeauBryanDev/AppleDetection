@@ -5,6 +5,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
+import { Footer } from '../components/common/Footer';
 import { Apple, Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
@@ -52,7 +53,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyber-black via-zinc-950 to-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-cyber-black via-zinc-950 to-black flex flex-col">
+      <div className="flex-1 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-6 sm:mb-8">
@@ -180,11 +182,12 @@ export default function LoginPage() {
           </div>
         </Card>
 
-        {/* Footer */}
         <div className="mt-8 text-center text-xs text-zinc-600 font-mono">
           &copy; 2025 Apple Yield Estimator. Powered by YOLOv8.
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }

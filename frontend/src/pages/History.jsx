@@ -24,7 +24,9 @@ export default function HistoryPage() {
   const [pagination, setPagination] = useState({ skip: 0, limit: 50 });
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
   const [touchStartX, setTouchStartX] = useState(null);
+  const pendingRequests = {}; 
   const thumbnailRefs = useRef({});
+
 
   useEffect(() => {
     loadHistory();
@@ -43,18 +45,38 @@ export default function HistoryPage() {
   };
 
   const getImageUrl = async (recordId) => {
+
     if (imageUrls[recordId]) return imageUrls[recordId];
+
+    if (pendingRequests[recordId]) return pendingRequests[recordId];
+
+    pendingRequests[recordId] = (async () => {
     try {
-      const token = localStorage.getItem('token');
+
       const res = await fetch(`/api/v1/history/${recordId}/image-url`, {
-        headers: { Authorization: `Bearer ${token}` }
+        // 1. Get token from localStorage
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
+
+      if (!res.ok) throw new Error('Error en la petición');
+
       const data = await res.json();
+
+      // Save State with the new URL
       setImageUrls(prev => ({ ...prev, [recordId]: data.url }));
+      
       return data.url;
-    } catch {
+    } catch (error) {
+      console.error(`Error cargando imagen ${recordId}:`, error);
       return null;
+    } finally {
+      // Clean up pending request promise
+      delete pendingRequests[recordId];
     }
+  })();
+
+  return pendingRequests[recordId];
+
   };
 
   const handleDelete = async (recordId) => {

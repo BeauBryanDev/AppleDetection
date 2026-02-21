@@ -2,6 +2,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Sidebar } from '../components/common/Sidebar';
 import { Header } from '../components/common/Header';
+import { Footer } from '../components/common/Footer';
 
 export function DashboardLayout() {
   const { isAuthenticated, isGuest, loading } = useAuth();
@@ -31,9 +32,10 @@ export function DashboardLayout() {
         <Header />
 
         {/* Aquí se renderizan las páginas (Dashboard, Estimator, etc.) */}
-        <div className="p-4 sm:p-6 lg:p-8 xl:p-10 fade-in-animation">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 fade-in-animation">
           <Outlet />
         </div>
+        <Footer />
       </main>
     </div>
   );
